@@ -1,0 +1,189 @@
+{
+  "name": "JeriGo - Monitoreo de errores",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -800,
+        -64
+      ],
+      "id": "b14f6355-e2e5-45da-92e9-fa8eb0cc7679",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "sendTo": "dmfernandez@jerarquicos.com",
+        "subject": "🚨 Error detectado en n8n",
+        "message": "=<table width=\"600\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" style=\"font-family:Segoe UI, Arial, sans-serif;border:1px solid #ddd;\">\n\n<tr>\n<td style=\"background:#D13438;color:white;padding:15px;\">\n<h2 style=\"margin:0;\">🚨 Error detectado en n8n</h2>\n<div>JeriGO Monitoring</div>\n</td>\n</tr>\n\n<tr>\n<td style=\"padding:20px;\">\n\n<table width=\"100%\" cellpadding=\"8\" cellspacing=\"0\" style=\"border-collapse:collapse;\">\n\n<tr>\n<td width=\"150\" style=\"background:#f3f2f1;\"><b>Workflow</b></td>\n<td>{{ $('Error Trigger').first().json.workflow.name }}</td>\n</tr>\n\n<tr>\n<td style=\"background:#f3f2f1;\"><b>ID</b></td>\n<td>{{ $('Error Trigger').first().json.workflow.id }}</td>\n</tr>\n\n<tr>\n<td style=\"background:#f3f2f1;\"><b>Nodo</b></td>\n<td>{{ $('Error Trigger').first().json.execution.lastNodeExecuted }}</td>\n</tr>\n\n<tr>\n<td style=\"background:#f3f2f1;\"><b>Chat ID</b></td>\n<td>{{ $json.chat_id }}</td>\n</tr>\n\n<tr>\n<td style=\"background:#f3f2f1;\"><b>Modo</b></td>\n<td>{{ $('Error Trigger').first().json.execution.mode }}</td>\n</tr>\n\n<tr>\n<td style=\"background:#f3f2f1;\"><b>Fecha</b></td>\n<td>{{ $now.setZone('America/Buenos_Aires').toFormat('dd/MM/yyyy HH:mm:ss') }}</td>\n</tr>\n\n</table>\n\n<br>\n\n<div style=\"padding:15px;background:#FFF4F4;border-left:5px solid #D13438;\">\n<b>⚠️ Detalle del Error</b><br><br>\n{{ $('Error Trigger').first().json.execution.error.message }}\n</div>\n\n<br>\n\n<div style=\"padding:15px;background:#f3f2f1;\">\n<b>👤 Usuario afectado</b><br>\n{{ $json.chat_id }}\n</div>\n\n<br>\n\n<div style=\"font-size:12px;color:#666;text-align:center;\">\nGenerado automáticamente por JeriGO Monitoring\n</div>\n\n</td>\n</tr>\n\n</table>",
+        "options": {
+          "appendAttribution": false,
+          "bccList": "",
+          "ccList": "sntoromora@jerarquicos.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        144,
+        -64
+      ],
+      "id": "32c53564-c3f3-4d3f-b7f2-e289f026fb5e",
+      "name": "Send a message",
+      "webhookId": "79f1f01a-a1f4-4865-bd55-bf179b42f7dc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "QKNwU659iydnsWdC",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ Lo siento, ocurrió un inconveniente al procesar tu consulta.  \nPor favor, intentá nuevamente en unos minutos.   \nSi el problema persiste, comunicate con el equipo responsable de JeriGO!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        -304
+      ],
+      "id": "2e639757-bcc7-4012-a864-b6ee10bad19e",
+      "name": "Send a text message",
+      "webhookId": "1ecf02bb-8739-4f47-beb9-4f2a711a51a6",
+      "credentials": {
+        "telegramApi": {
+          "id": "ONff4x3BF87l6CDr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT chat_id\nFROM workflow_runtime\nORDER BY created_at DESC\nLIMIT 1;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -288,
+        -64
+      ],
+      "id": "da55b979-9845-4b0c-be25-1af000102b20",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "7SUdyUiJsMX1YH3u",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fb8b8fb3-856b-470c-b945-a2f51b4271de",
+              "name": "workflow_name",
+              "value": "={{ $json.workflow.name }}",
+              "type": "string"
+            },
+            {
+              "id": "59b92801-1245-402d-8521-dd915664abc9",
+              "name": "workflow_id",
+              "value": "={{ $json.workflow.id }}",
+              "type": "string"
+            },
+            {
+              "id": "c8941ee7-c78a-4127-953e-8bbb8e708b22",
+              "name": "error_node",
+              "value": "={{ $json.execution.lastNodeExecuted }}",
+              "type": "string"
+            },
+            {
+              "id": "40ed42f3-6806-4bd4-8281-aae56a3ffcfe",
+              "name": "error_message",
+              "value": "={{ $json.execution.error.message }}",
+              "type": "string"
+            },
+            {
+              "id": "bd580e4c-6e5c-4666-bba8-4323d5cf35e2",
+              "name": "error_url",
+              "value": "={{ $json.execution.url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -576,
+        -64
+      ],
+      "id": "e62a1a2a-9774-44bb-a594-e0215ed1f204",
+      "name": "Error Trigger Data"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Error Trigger Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Error Trigger Data": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "347bb358-73a6-4c56-b74f-16c495f95bfe",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a926c9710c129004cb72e65197c5848751ff5571ec080fb3b3a92c7995412a33"
+  },
+  "nodeGroups": [],
+  "id": "LbxcSlq28pX0uFpr",
+  "tags": []
+}

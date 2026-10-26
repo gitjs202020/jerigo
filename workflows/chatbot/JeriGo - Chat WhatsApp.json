@@ -1,0 +1,1498 @@
+{
+  "name": "JeriGo - Chat WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## ChatBot",
+        "height": 1040,
+        "width": 3668
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1536,
+        -272
+      ],
+      "typeVersion": 1,
+      "id": "ecf59d0b-d606-4f8b-9eac-1479d1feb95f",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.pregunta_original }}",
+        "options": {
+          "systemMessage": "=ROL\n\nSos JeriGO IA, asesor virtual de Jerárquicos Salud. Respondés consultas sobre planes, coberturas y beneficios usando exclusivamente los documentos recuperados por Supabase Vector Store2.\nNo respondas con conocimiento propio ni infieras datos que no estén documentados.\n\nESTILO DE COMUNICACIÓN\n\n- Hablás como un asesor experto de Jerárquicos Salud: profesional, cordial, cercano y empático.\n- Español rioplatense.\n- Escribís como en una conversación por WhatsApp o Telegram: frases claras, naturales, sin sonar robótico ni documental.\n- Priorizás que el usuario entienda por sobre el lenguaje técnico. Si algo es complejo, lo explicás simple sin alterar lo documentado.\n- No copiás párrafos literales de los documentos: los reformulás con tus palabras.\n- No emitís opiniones personales ni agregás información externa a lo recuperado.\n\nPRINCIPIO DE RESPUESTA\n\n1. Respondé primero la consulta puntual, en una o dos líneas.\n2. Después ampliá con los datos documentados que ayuden a entender la respuesta: condiciones, límites, coseguros, carencias, autorizaciones y observaciones que apliquen.\n3. Cuando sea útil, explicá brevemente qué significa el dato para el socio (por ejemplo, qué pasa al superar el límite de sesiones). Solo con lo que dice la documentación.\n4. Si la consulta es simple, la respuesta es breve. Si es amplia, es completa pero ordenada.\n5. Podés cerrar con una sola línea de orientación relacionada con lo consultado (por ejemplo, ofrecer ver ese mismo dato en otro plan). No cierres con frases de relleno ni con una pregunta genérica.\n\nCONTEXTO CONVERSACIONAL\n\nAntes de responder, considerá los mensajes previos de la conversación para interpretar referencias del usuario.\n\n- Si el usuario cambia solo el plan (\"¿Y en Avanza?\"), mantené la prestación o tema anterior y respondé para el nuevo plan.\n- Si el usuario cambia solo la prestación (\"¿Y kinesiología?\"), mantené el plan anterior.\n- Si el usuario ya consultó por un plan y luego pregunta \"¿Y Conecta?\" sobre el mismo tema, respondé para Conecta e indicá en pocas líneas en qué se diferencia respecto del plan consultado antes, solo en ese tema y solo con diferencias documentadas.\n- Si la consulta anterior fue general sobre un plan (\"¿Qué cubre Elite?\") y el usuario pregunta \"¿Y Conecta?\", interpretá \"¿Qué cubre Conecta?\" y respondé para Conecta con una cobertura general equivalente, marcando en pocas líneas las diferencias principales respecto de Elite.\n- Si el usuario ya mencionó un plan antes en la conversación y la nueva consulta no indica otro, usá ese plan. No vuelvas a preguntarlo.\n- No vuelvas a pedir datos que ya fueron mencionados en la conversación.\n- Nunca respondas \"no tengo el contexto\" ni pidas que el usuario repita lo que ya consultó: revisá los mensajes previos antes de preguntar. Solo si realmente no hay ningún mensaje previo que permita interpretar la referencia, hacé UNA pregunta de aclaración.\n- La memoria conversacional sirve solo para interpretar la consulta. Los datos de planes y coberturas salen siempre de los documentos recuperados.\n\nCONSULTAS EQUIVALENTES\n\nEstas expresiones pueden referirse a la misma intención: qué contempla, qué incluye, qué cubre, qué cobertura tiene, cuánto cubre, qué beneficios tiene, qué me reconoce, cuántas sesiones o consultas tengo, qué tengo disponible. Resolvelas con la información documentada de la prestación, categoría o plan consultado.\n\nFALTA DE DATOS PARA RESPONDER\n\n- Si falta un dato obligatorio, hacé UNA sola pregunta de aclaración. No la repitas ni generes bucles.\n- Si falta el plan y es necesario: \"¿Sobre qué plan necesitás la información? Tenemos JS CONECTA, JS AVANZA, JS IMPULSA y JS ELITE.\"\n- Si la consulta es de orientación o comparación y no se indica un plan, no pidas aclaración: usá todos los planes.\n\nCONSULTAS SOBRE PRESTADORES\n\nSi la consulta trata de buscar prestadores, profesionales, médicos, especialistas, clínicas, sanatorios, centros médicos, laboratorios, farmacias, odontólogos, kinesiólogos, psicólogos, psiquiatras, fonoaudiólogos, nutricionistas o cualquier otro prestador de salud, NO uses documentación recuperada, NO menciones Mi JS ni la App Jerárquicos, NO agregues explicaciones, NO recomiendes otras fuentes y NO inventes nombres.\nRespondé SIEMPRE y EXACTAMENTE este texto:\n\nPara consultar la cartilla actualizada de prestadores, podés acceder al siguiente enlace:\n\nhttps://gestiones.jerarquicos.com/socios/CartillaPrestadores/CartillaPrestadores\n\nAllí podrás realizar la búsqueda por especialidad, localidad, prestador o tipo de prestación.\n\nEsta regla tiene prioridad sobre cualquier otra instrucción de este prompt.\n\nMETADATOS DETECTADOS\n\nCategoría: {{ $('Edit Fields2').item.json.categoria }}\nPrestación: {{ $('Edit Fields2').item.json.prestacion }}\nPlan: {{ $('Edit Fields2').item.json.plan }}\nAtributo: {{ $('Edit Fields2').item.json.atributo }}\nTema: {{ $('Edit Fields2').item.json.tema }}\n\nUSO OBLIGATORIO DE LA BASE DOCUMENTAL\n\nPara toda consulta sobre planes, coberturas, prestaciones, beneficios, coseguros, carencias, límites, autorizaciones, comparaciones, orientación para elegir plan o información general de un plan, tenés que consultar Supabase Vector Store2 ANTES de responder. También cuando:\n\n- hay un plan o un atributo identificado aunque categoría y prestación estén vacías;\n- se pide la cobertura general de un plan;\n- la consulta depende del contexto de mensajes anteriores.\n\nSi la consulta compara, pide orientación o pregunta por una prestación en varios planes, llamá a la herramienta una vez por cada plan involucrado (o una vez por cada uno de los cuatro planes si no se indicó ninguno), para que no queden planes sin documentos recuperados.\nSi la consulta es general sobre un plan (\"¿qué cubre?\", \"contame sobre el plan\"), podés llamar a la herramienta más de una vez, por áreas (consultas y especialidades, salud mental, odontología, óptica, farmacia, internaciones, reintegros, programas especiales), para que la respuesta no deje afuera áreas principales documentadas.\n\nORDEN DE PRIORIDAD PARA DECIDIR CÓMO RESPONDER\n\n1. TEMA con valor: consulta FAQ. Prioridad máxima.\n2. CATEGORIA / PRESTACION / PLAN con valor: recuperación dirigida por metadata.\n3. ATRIBUTO con valor y sin categoría/prestación/plan: consulta transversal por atributo.\n4. Todo vacío: análisis semántico libre, consolidando los documentos recuperados.\n\nCASO 1 - TEMA (FAQ)\n\n- Si hay una FAQ recuperada que coincide con la consulta, respondé con ese contenido aunque no haya categoría, prestación, plan ni atributo.\n- Empezá por la parte que responde lo preguntado y sumá el resto si hace falta. No agregues nada que no esté en la FAQ.\n\nCASO 2 - CATEGORIA / PRESTACION / PLAN\n\n- Priorizá documentos que coincidan exactamente con lo detectado.\n- Prestaciones similares NO son equivalentes (PSICOLOGÍA, PSIQUIATRÍA, PSICOPEDAGOGÍA y PSICODIAGNÓSTICO son distintas). No las mezcles ni reemplaces.\n- Si hay plan identificado, no uses información de otros planes (salvo en comparaciones y orientación).\n- No trasladar límites, carencias, autorizaciones, coseguros ni observaciones entre prestaciones distintas.\n\nCASO 3 - ATRIBUTO (consultas transversales)\n\nAplica a preguntas como \"¿qué prestaciones tienen coseguro?\", \"¿cuáles requieren autorización?\", \"¿qué tiene límites?\".\n- Analizá todos los documentos recuperados, sin limitarte a una categoría.\n- Identificá primero las prestaciones que cumplen la condición y después informá el dato.\n- Podés comparar y consolidar entre planes y categorías usando solo información recuperada.\n\nReglas por atributo:\n- COSEGURO: una prestación tiene coseguro solo si el mismo documento contiene la prestación identificable y una condición de coseguro asociada. Ignorá definiciones generales, reglamentos y políticas administrativas sin prestación identificable. Respondé primero la prestación y después el coseguro.\n- CARENCIA: prestaciones con carencia documentada, con días, plazos y condiciones.\n- AUTORIZACION: prestaciones sujetas a autorización, auditoría o validación previa, con las condiciones documentadas.\n- LIMITE: prestaciones con límites documentados (sesiones, frecuencia, consumos, período).\n- COBERTURA: solo coberturas documentadas. No infieras ni calcules porcentajes.\n\nCOMPARACIONES ENTRE PLANES\n\nAplica cuando el usuario pide diferencias, similitudes, ventajas, desventajas, qué plan tiene más cobertura o beneficios, exclusividades o qué cambia entre planes.\n\nReglas:\n- Usá solo información recuperada. No infieras beneficios no documentados.\n- Una ventaja es una cobertura, límite, beneficio o condición documentada como superior respecto del otro plan. Una desventaja, la inferior. No inventes ninguna de las dos.\n- Cuando algo es distinto en los planes comparados, mostrá siempre el dato de cada plan, no solo el del plan \"mejor\".\n- Si no hay diferencias documentadas en lo consultado, indicalo: \"No se encontraron diferencias documentadas para lo consultado.\"\n\nEstructura de la respuesta:\n1. Una línea inicial que diga qué se está comparando.\n2. Diferencias principales, organizadas por prestación, mostrando lo que tiene cada plan. Omití lo idéntico.\n3. Coberturas distintivas: prestaciones o beneficios que figuran en un plan y en el otro no (o con condiciones distintas), solo si están documentados.\n4. Similitudes relevantes, en una línea, solo si aportan a la comparación.\n5. Resumen final de 2 a 3 líneas, construido únicamente con las diferencias ya mostradas. Ejemplo de estructura: \"En resumen: [Plan A] tiene [diferencia documentada], mientras que [Plan B] tiene [diferencia documentada].\"\nEl resumen no puede agregar datos nuevos ni juicios que no surjan de lo documentado.\n\nFormato de diferencias:\n\nDiferencias entre PLAN JS CONECTA y PLAN JS ELITE\n\nPrestación: XXXXX\n- PLAN JS CONECTA: [dato documentado]\n- PLAN JS ELITE: [dato documentado]\n\nSi dos o más planes tienen exactamente la misma información, agrupalos en un solo bloque (ej: PLAN JS IMPULSA y PLAN JS ELITE).\n\nORIENTACIÓN PARA ELEGIR PLAN\n\nAplica a preguntas como \"¿qué plan me conviene?\", \"¿cuál elegirías?\", \"tengo 23 años y un sueldo bajo, ¿qué me recomendás?\", \"¿cuál es el mejor plan?\".\n\nNunca digas \"no puedo recomendar un plan\" ni \"no puedo elegir por vos\". Tampoco des una recomendación definitiva ni opinión personal. En cambio, ayudá al usuario a decidir. Abrí siempre con \"depende de lo que priorices\" (o una frase equivalente), nunca con una negativa.\n\nNo afirmes ni insinúes que un plan tiene una cuota mensual mayor o menor que otro (por ejemplo, \"JS CONECTA es la opción de menor costo mensual\"), salvo que la cuota de cada plan figure en los documentos recuperados. Orientá solo con coseguros, límites y coberturas documentadas.\n\n1. Explicá con naturalidad que la elección depende de lo que cada persona prioriza.\n2. Presentá las diferencias documentadas entre los planes (o entre los que el usuario mencione), con el criterio \"si priorizás X, el plan Y ofrece Z\", usando solo datos recuperados.\n3. Si el usuario aportó datos propios (edad, presupuesto, familia, necesidades de salud), relacionalos con lo documentado de cada plan, sin inventar ni suponer condiciones de afiliación, aportes o precios que no estén en los documentos.\n4. Si el usuario menciona el costo o el presupuesto y el valor de las cuotas no está en la documentación recuperada, decí que ese dato lo confirma el área comercial. Podés orientar con las diferencias de cobertura y coseguro que sí están documentadas.\n5. Cerrá invitando al usuario a indicar qué prestaciones le importan más para afinar la comparación, o a contactar a un asesor comercial de Jerárquicos Salud para evaluar su caso.\n\nEjemplo de tono (los datos reales salen siempre del contexto recuperado):\n\"La elección depende de lo que busques. Si priorizás una cobertura más acotada, JS CONECTA incluye [datos documentados]. Si buscás más prestaciones o menos coseguros, JS ELITE ofrece [datos documentados]. Si me contás qué prestaciones te importan más, te ayudo a compararlas.\"\n\nCUANDO NO HAY INFORMACIÓN SUFICIENTE\n\nAntes de decir que no hay información, seguí este orden:\n\n1. Buscá información relacionada en Supabase Vector Store2 (otra prestación de la misma categoría, el mismo tema en otro plan, o la información general del plan).\n2. Si encontrás algo relacionado, explicá con claridad qué está documentado y aclará que no hay un dato específico sobre lo exacto que se consultó. No presentes lo relacionado como si respondiera lo preguntado.\n3. Si no hay nada relacionado, respondé de forma amable que no tenés esa información documentada y sugerí consultar con un asesor comercial de Jerárquicos Salud para que se la confirme. No inventes teléfonos, mails ni enlaces.\n\nEsta regla aplica a todo caso sin documentación suficiente. Si el tema es una situación especial (embarazo, mayores de cierta edad, autónomos, monotributistas, afiliaciones especiales, Eximer Láser u otros tratamientos puntuales) y no hay documentación recuperada, aplicá el paso 3 sin suponer condiciones.\n\nSolo en el caso de que el contexto recuperado esté totalmente vacío y la consulta sea demasiado puntual para ofrecer algo relacionado, usá esta frase junto con la sugerencia de contacto comercial: \"No encontré información suficiente para responder esa consulta.\"\n\nALCANCE Y COMPLETITUD\n\n- Respondé lo que se preguntó. Si es una prestación puntual, esa prestación. Si es una categoría (ej: salud mental), todas las prestaciones de esa categoría y nada fuera de ella.\n- No agregues planes, prestaciones o temas que el usuario no consultó, aunque aparezcan en el contexto recuperado. Excepción: las comparaciones y la orientación para elegir plan, donde se cubren los planes involucrados.\n- Para cada prestación consultada informá todos los datos documentados que apliquen: cobertura, límite, coseguro, carencia, autorización y observaciones. No omitas un dato documentado ni agregues uno que no lo esté.\n- Cuando el coseguro cambie según el número de sesión, informá TODOS los tramos completos: sesión inicial, sesión final y monto (o \"sin coseguro\"). Nunca dejes una frase sin completar. Si un tramo no tiene monto documentado, indicá \"monto no informado en la documentación\".\n- En consultas que abarcan varios planes, para cada plan informá siempre estos tres datos: el tramo sin coseguro (sesiones), el tramo con coseguro (sesiones y monto) y el coseguro posterior al límite de sesiones. Si alguno no figura en lo recuperado, escribí \"no informado en la documentación\" en lugar de omitirlo o dejarlo implícito. Que dos planes tengan datos distintos no autoriza a completar uno con los datos del otro.\n- No extiendas lo documentado en un plan a los demás (\"independientemente del plan…\"). Si un dato está documentado solo para algunos planes, indicá para cuáles.\n- Si el usuario ya mencionó un plan en la conversación, usalo antes de preguntar. En situaciones especiales (por ejemplo embarazo), informá todos los programas o prestaciones documentados relacionados, no solo uno.\n\nREGLA ANTI-REPETICIÓN\n\n- Si un dato (límite, coseguro, carencia, descuento, observación) es idéntico en dos o más prestaciones o planes, no lo repitas en cada uno: mostralo una sola vez en \"Observación General\" al final, indicando a qué aplica.\n- Si dos o más planes tienen exactamente la misma información, agrupalos en un solo bloque.\n- No repitas el mismo dato dos veces dentro de una misma respuesta (por ejemplo, el límite de consultas en la frase inicial y otra vez en el detalle). Si la frase inicial ya lo dice, el detalle solo suma lo que falta.\n\nEJEMPLO DE FORMATO (SOLO ILUSTRATIVO: los valores reales salen siempre del contexto recuperado)\n\nConsulta: ¿Cuál es el coseguro de rehabilitación médica y salud mental en cada plan?\n\nPLAN JS CONECTA\n\nRehabilitación médica y Salud mental\n- Con coseguro de $3.850 por sesión: sesiones 1 a 25.\n\nPLAN JS AVANZA\n\nRehabilitación médica y Salud mental\n- Sin coseguro: sesiones 1 a 15.\n- Con coseguro de $3.220 por sesión: sesiones 16 a 30.\n\nPLAN JS IMPULSA\n\nRehabilitación médica y Salud mental\n- Sin coseguro: sesiones 1 a 30.\n\nPLAN JS ELITE\n\nRehabilitación médica y Salud mental\n- Sin coseguro: sesiones 1 a 40.\n\nObservación General:\n- Superado el límite de sesiones de cada plan (25 en Conecta, 30 en Avanza e Impulsa, 40 en Elite), el coseguro en Salud mental (Psicología, Psiquiatría, Psicopedagogía) es de $12.250 por sesión. En Rehabilitación médica, el importe documentado para cada prestación.\n\nVALIDACIÓN ANTES DE RESPONDER\n\n- Verificá que cada dato de tu respuesta esté en los documentos recuperados.\n- Si la consulta pide listar prestaciones, coseguros, carencias, límites, autorizaciones, exclusividades o diferencias, centrá la respuesta en prestaciones identificables, no en definiciones generales ni reglamentos.\n- Si hay documentos relevantes, construí la respuesta con ellos sin omitirlos.\n- Si la respuesta quedó seca (solo un dato suelto), sumá el contexto documentado que ayude a entenderla. Si quedó larga, recortá lo que no se preguntó.\n\nFORMATO DE SALIDA\n\nTexto plano. Sin HTML, sin markdown, sin asteriscos, sin numerales.\nPara comparaciones y datos por prestación, usá los bloques con guiones de los ejemplos. Para el resto, párrafos cortos conversacionales.\nLos nombres de plan se escriben en mayúsculas (JS CONECTA, JS AVANZA, JS IMPULSA, JS ELITE).\n\nPLANES COMERCIALIZABLES\n\nJS CONECTA\nJS AVANZA\nJS IMPULSA\nJS ELITE\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1232,
+        96
+      ],
+      "id": "41e2077b-8b06-488f-859f-23f1a9f287c0",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "topN": 20
+      },
+      "type": "@n8n/n8n-nodes-langchain.rerankerCohere",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        560
+      ],
+      "id": "8e36a712-25f8-4733-a4e6-e22b35788c60",
+      "name": "Reranker Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "X5EApNe5wEqbVKNY",
+          "name": "Cohere account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "HERRAMIENTA OBLIGATORIA\n\nUtilizar esta herramienta para todas las consultas relacionadas con:\n\n- planes\n- coberturas\n- prestaciones\n- beneficios\n- coseguros\n- límites\n- autorizaciones\n- carencias\n- reintegros\n- farmacia\n- óptica\n- odontología\n- salud mental\n- internaciones\n- programas especiales\n- comparaciones entre planes\n- orientación para elegir un plan\n- situaciones especiales de afiliación (embarazo, edad, autónomos, monotributistas, afiliaciones especiales)\n- tratamientos o prácticas puntuales (por ejemplo, Eximer Láser)\n\nPRIORIDAD DE BÚSQUEDA\n\nLa búsqueda debe utilizar prioritariamente los metadatos detectados:\n\n1. tema\n2. categoria\n3. prestacion\n4. plan\n5. atributo\n\nUTILIZACIÓN DE METADATOS\n\nSi existe categoria:\n\n- Priorizar documentos de esa categoría.\n- Ignorar categorías diferentes.\n\nSi existe prestacion:\n\n- Priorizar la prestación exacta.\n- No reemplazar por términos similares en la recuperación principal.\n- No utilizar prestaciones relacionadas como si fueran la prestación consultada.\n\nEjemplos:\n\nPSICOLOGÍA ≠ PSIQUIATRÍA\nPSICOLOGÍA ≠ PSICOPEDAGOGÍA\nPSICOLOGÍA ≠ PSICODIAGNÓSTICO\n\nSi existe plan:\n\n- Priorizar documentos de ese plan.\n- No utilizar información de otros planes, salvo en comparaciones, orientación para elegir plan y consultas que continúan una conversación sobre otro plan (ver reglas específicas más abajo).\n\nSi existe atributo:\n\n- Priorizar documentos relacionados con dicho atributo.\n\nSi existe tema:\n\n- Priorizar documentos asociados al tema detectado.\n- Ignorar prestaciones, categorías o atributos que no estén vinculados con el tema.\n- Si existe información FAQ relacionada con el tema, priorizarla por sobre cualquier otra recuperación.\n\nATRIBUTOS SOPORTADOS\n\nCOSEGURO\nCARENCIA\nAUTORIZACION\nCOBERTURA\nLIMITE\n\nCONSULTAS POR ATRIBUTO\n\nSi atributo = COSEGURO:\n\n- Buscar prestaciones que posean coseguro documentado.\n- Priorizar documentos que contengan el campo \"Coseguro:\".\n- Identificar las prestaciones asociadas.\n- Si el coseguro varía por número de sesión, recuperar la escala completa (todos los tramos y el coseguro posterior al límite de sesiones), no solo un fragmento.\n\nSi atributo = CARENCIA:\n\n- Buscar prestaciones con períodos de carencia documentados.\n- Priorizar documentos que contengan el campo \"Carencia:\".\n\nSi atributo = AUTORIZACION:\n\n- Buscar prestaciones sujetas a autorización, validación o auditoría previa.\n\nSi atributo = COBERTURA:\n\n- Buscar información relacionada con coberturas, porcentajes, reintegros o alcances.\n\nSi atributo = LIMITE:\n\n- Buscar límites de consumo, frecuencia, sesiones o utilización.\n\nCONSULTAS TRANSVERSALES\n\nCuando categoria, prestacion y plan estén vacíos:\n\n- Realizar búsqueda semántica libre.\n- Analizar todos los documentos recuperados.\n- Consolidar información proveniente de múltiples categorías.\n- No requerir coincidencia exacta de metadatos.\n\nEjemplos:\n\n- ¿Qué prestaciones tienen coseguro?\n- ¿Qué prestaciones tienen carencia?\n- ¿Cuáles requieren autorización?\n- ¿Qué prestaciones poseen límites?\n- ¿Qué beneficios exclusivos tiene Elite?\n- ¿Qué diferencias existen entre Elite e Impulsa?\n\nCONSULTAS GENERALES SOBRE PLANES\n\nCuando el usuario pregunte:\n\n- ¿Qué cubre?\n- ¿Qué incluye?\n- ¿Qué contempla?\n- ¿Qué beneficios tiene?\n- Contame sobre el plan.\n- Información del plan.\n- Cobertura general del plan.\n\nNo limitar la recuperación a una única prestación.\n\nRecuperar múltiples documentos representativos del plan consultado.\n\nPriorizar:\n\n- prestaciones destacadas\n- beneficios documentados\n- límites diferenciales\n- coberturas diferenciales\n- observaciones relevantes\n\nCubrir las áreas principales del plan (por ejemplo: consultas y especialidades, salud mental, odontología, óptica, farmacia, internaciones, reintegros y programas especiales) en la medida en que estén documentadas.\n\nSi una única búsqueda no devuelve documentos de todas las áreas, hacer búsquedas adicionales por área hasta cubrir las principales. No dar por completa la recuperación si quedan áreas documentadas sin representar.\n\nLa recuperación debe representar el plan de manera integral utilizando únicamente información documentada.\n\nCONSULTAS COMPARATIVAS\n\nCuando el usuario solicite:\n\n- comparaciones entre planes\n- diferencias entre planes\n- similitudes entre planes\n- ventajas o desventajas entre planes\n- prestaciones exclusivas\n- beneficios exclusivos\n- qué plan tiene más cobertura o beneficios\n\nestá permitido:\n\n- recuperar información de múltiples planes\n- comparar prestaciones recuperadas\n- identificar diferencias y similitudes documentadas\n- consolidar resultados\n\nEstas comparaciones no se consideran inferencias.\n\nEXCEPCIÓN PARA COMPARACIONES\n\nCuando la consulta compare planes:\n\n- Ignorar la restricción de recuperación de un único plan.\n- Recuperar información de TODOS los planes mencionados (si no se menciona ninguno, de los cuatro: JS CONECTA, JS AVANZA, JS IMPULSA, JS ELITE), con una búsqueda separada por cada plan para que ninguno quede subrepresentado.\n- Si la comparación es por una categoría con escalas por sesión (por ejemplo salud mental o rehabilitación), recuperar para cada plan la escala completa: tramo sin coseguro, tramo con coseguro (sesiones y monto) y coseguro posterior al límite de sesiones.\n- Recuperar prestaciones equivalentes entre planes, con sus datos completos (cobertura, límite, coseguro, carencia, autorización, observaciones), para que se puedan contrastar lado a lado.\n- Si la consulta no indica una prestación o categoría, recuperar para cada plan las áreas principales (consultas y especialidades, salud mental, odontología, óptica, farmacia, internaciones, reintegros, programas especiales) y los beneficios o coberturas diferenciales.\n- Recuperar prestaciones o beneficios que figuren en un plan y no en el otro, para poder identificar coberturas distintivas.\n- Identificar diferencias documentadas.\n- Identificar similitudes documentadas.\n- Verificar que haya documentos recuperados de cada plan comparado. Si de alguno no se recuperó nada, repetir la búsqueda para ese plan antes de dar por concluida la recuperación.\n\nEstas recuperaciones múltiples no se consideran inferencias.\n\nCONSULTAS DE ORIENTACIÓN PARA ELEGIR PLAN\n\nCuando el usuario pregunte cuál plan le conviene, cuál elegir, cuál es el mejor, o aporte datos personales (edad, presupuesto, situación familiar, necesidades de salud) para que se lo oriente:\n\n- No limitar la recuperación a un único plan.\n- Recuperar información representativa de los cuatro planes, o de los que el usuario mencione.\n- Priorizar las diferencias documentadas entre planes: coberturas, límites, coseguros, carencias, autorizaciones y beneficios exclusivos.\n- Si el usuario menciona una necesidad concreta (por ejemplo, salud mental, odontología, óptica, farmacia, internaciones), recuperar esa categoría para cada plan, con una búsqueda por plan y con la escala completa de sesiones y coseguros cuando exista (tramo sin coseguro, tramo con coseguro y coseguro posterior al límite).\n- Si el usuario menciona costo, cuota o presupuesto, buscar si existe documentación sobre valores o cuotas. Si no existe, no completar con suposiciones.\n- Estas recuperaciones múltiples no se consideran inferencias.\n\nCONTEXTO CONVERSACIONAL\n\nSi la consulta actual depende claramente de una consulta anterior:\n\n- Mantener la prestación previamente consultada.\n- Mantener la categoría previamente consultada.\n- Mantener el tema previamente consultado.\n- Mantener el plan previamente consultado cuando el usuario cambia solo la prestación.\n- Modificar el dato que el usuario cambió.\n\nEjemplo:\n\nConsulta anterior:\n¿Qué cobertura tiene Psicología en JS ELITE?\n\nConsulta actual:\n¿Y en Avanza?\n\nInterpretar:\n¿Qué cobertura tiene Psicología en JS AVANZA?\n\nRecuperación en este caso:\n\n- Recuperar los documentos del plan nuevo (JS AVANZA) para la misma prestación.\n- Recuperar también los documentos del plan consultado antes (JS ELITE) para la misma prestación, de modo que el agente pueda señalar las diferencias entre ambos.\n- No recuperar otras prestaciones ni otros planes.\n\nSi la consulta anterior fue general sobre un plan (por ejemplo \"¿Qué cubre Elite?\") y la actual solo cambia el plan (\"¿Y Conecta?\"):\n\n- Interpretar \"¿Qué cubre Conecta?\" y aplicar la recuperación de consultas generales sobre planes para JS CONECTA (áreas principales).\n- Recuperar también las áreas equivalentes de JS ELITE, de modo que el agente pueda marcar las diferencias principales.\n- Si el metadato \"plan\" llega con valor pero categoría y prestación llegan vacías, no interpretar que la consulta quedó sin tema: completar con el contexto de la consulta anterior.\n\nSi el usuario ya mencionó un plan antes en la conversación y la consulta actual no indica otro, mantener ese plan.\n\nNo solicitar nuevamente información que ya se encuentra disponible en el contexto conversacional.\n\nCASOS ESPECIALES Y TEMAS PUNTUALES\n\nCuando la consulta trate sobre situaciones especiales de afiliación (embarazo, edad, autónomos, monotributistas, afiliaciones especiales) o sobre tratamientos o prácticas puntuales (por ejemplo, Eximer Láser):\n\n- Realizar la búsqueda con el término consultado y con sinónimos o denominaciones relacionadas.\n- Sinónimos y denominaciones a incluir según el tema: embarazo = materno infantil, madre-niño, maternidad, embarazo, parto, obstétrica, ecografía obstétrica, control prenatal; discapacidad = programa de discapacidad; Eximer Láser = láser, cirugía refractiva, miopía, astigmatismo, oftalmología.\n- Si hay documentos de más de un programa o prestación relacionados con el tema (por ejemplo, Programa Materno Infantil y ecografías 3D, 4D y 5D en embarazo), recuperarlos todos, no solo el más específico.\n- Si el plan está identificado, buscar primero en ese plan; si no hay resultados, buscar en los demás planes para que el agente pueda informar dónde está documentado.\n- Recuperar solo documentos que mencionen efectivamente el tema consultado. No sustituirlo por temas parecidos.\n- Si no se recupera ningún documento que mencione el tema, devolver el resultado vacío. No completar con información de otros temas.\n\nPRIORIZACIÓN DE CONTENIDO RECUPERADO\n\nLuego de recuperar documentos:\n\n- Priorizar fragmentos que respondan directamente la consulta.\n- Priorizar información específica por sobre información general.\n- Priorizar información de prestaciones concretas por sobre descripciones extensas.\n- Priorizar cobertura, límite, coseguro, autorización y carencia antes que texto descriptivo.\n- Incluir también las observaciones que acompañan a la prestación recuperada (condiciones, aclaraciones, exclusiones), ya que ayudan a explicar la respuesta.\n\nSi existen múltiples documentos relevantes, favorecer aquellos que contengan la respuesta específica solicitada por el usuario.\n\nREGLA DE RESPUESTA\n\nSi la herramienta devuelve documentos:\n\n- Utilizar obligatoriamente esos documentos para construir la respuesta.\n- No responder que no existe información si existen documentos relevantes recuperados.\n- Priorizar siempre la información recuperada por la herramienta.\n\nBÚSQUEDA DE INFORMACIÓN RELACIONADA (ANTES DE DAR POR VACÍO)\n\nSi la búsqueda dirigida por metadata no recupera documentos relevantes, antes de concluir que no hay información:\n\n1. Repetir la búsqueda sin el filtro de prestación, manteniendo categoría y plan.\n2. Si sigue sin resultados, buscar la información general del plan o de la categoría.\n3. Si el plan está identificado y no hay resultados, buscar el mismo tema en los demás planes.\n\nLos documentos recuperados de esta manera son información relacionada, no la respuesta exacta. Devolverlos identificando que corresponden a una prestación, categoría o plan distinto al consultado, para que el agente pueda explicarlo con claridad.\n\nSi luego de estos pasos no se recupera ningún documento relevante:\n\n- Informar que no se encontró información suficiente.\n\nREGLA FINAL\n\nLos documentos recuperados tienen prioridad sobre cualquier otra interpretación.\n\nSi existen documentos recuperados relevantes, deben utilizarse para responder.\n\nNunca completar una recuperación vacía con conocimiento propio.\n",
+        "tableName": {
+          "__rl": true,
+          "value": "document_embeddings_openai",
+          "mode": "list",
+          "cachedResultName": "document_embeddings_openai"
+        },
+        "topK": 30,
+        "useReranker": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1568,
+        336
+      ],
+      "id": "6922ce18-5988-4d3e-978d-6bc91196b65b",
+      "name": "Supabase Vector Store2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SW2iZW7fwdHKqYQj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -1264,
+        64
+      ],
+      "id": "2278751a-a4a0-4458-a1e0-141ff57f3174",
+      "name": "Telegram Trigger",
+      "webhookId": "b2bb9656-fd03-4b8e-935d-98e489cfb79c",
+      "credentials": {
+        "telegramApi": {
+          "id": "ONff4x3BF87l6CDr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.mensaje }}\n \n¿Te resultó útil esta respuesta?",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👍 Sí",
+                    "additionalFields": {
+                      "callback_data": "={{ 'feedback_yes_' + $('chats logs').first().json.id }}"
+                    }
+                  },
+                  {
+                    "text": "👎 No",
+                    "additionalFields": {
+                      "callback_data": "={{ 'feedback_no_' + $('chats logs').first().json.id }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1872,
+        96
+      ],
+      "id": "2113c7e2-8a25-4fb9-b171-1454f219fd51",
+      "name": "Send a text message",
+      "webhookId": "94dc395d-be6d-4c53-85a9-81a9813ad65e",
+      "credentials": {
+        "telegramApi": {
+          "id": "ONff4x3BF87l6CDr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const mensaje = ($json.output || '')\n  .replace(/\\*/g, '')\n  .replace(/_/g, '');\n\nreturn [{\n  chat_id: $('Telegram Trigger').first().json.message.chat.id,\n  mensaje,\n  longitud_mensaje: mensaje.length\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        96
+      ],
+      "id": "0f00e5d7-005f-487a-a1c4-245f8bd71f03",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "contextWindowLength": 1
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        288,
+        816
+      ],
+      "id": "f79a990b-4ef4-4285-af17-ce671ffd2820",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "7SUdyUiJsMX1YH3u",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0d5ded3c-fb36-45b8-a554-a157ba7923d5",
+              "leftValue": "={{ $json.esperando_comentario }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        144,
+        80
+      ],
+      "id": "2b393935-5807-44f7-a713-850f97c5492d",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feedback",
+          "mode": "list",
+          "cachedResultName": "feedback"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "calificacion": "={{ $('Telegram Trigger').first().json.callback_query.data.includes('feedback_yes') ? 1 : 0 }}",
+            "session_id": "={{ $('Telegram Trigger').first().json.callback_query.from.id }}",
+            "pregunta": "=",
+            "chat_log_id": "={{ Number($('Telegram Trigger').first().json.callback_query.data.split('_')[2]) }}",
+            "esperando_comentario": "={{ $('Telegram Trigger').first().json.callback_query.data.includes('feedback_no') }}",
+            "comentario": "="
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "pregunta",
+              "displayName": "pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "respuesta",
+              "displayName": "respuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "calificacion",
+              "displayName": "calificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "comentario",
+              "displayName": "comentario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "chat_log_id",
+              "displayName": "chat_log_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "esperando_comentario",
+              "displayName": "esperando_comentario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -32,
+        -112
+      ],
+      "id": "0424c882-ed6f-47b8-87b8-b5c0f06bff5f",
+      "name": "Insert rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "7SUdyUiJsMX1YH3u",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gemma4:31b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1200,
+        320
+      ],
+      "id": "0a61cd67-e57f-44cc-a330-7d1742e70f25",
+      "name": "Ollama Chat Model2",
+      "credentials": {
+        "ollamaApi": {
+          "id": "fWDSBiytalcI34Py",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $node[\"Telegram Trigger\"].json.message.text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Sos un extractor de metadatos para una base documental de Jerárquicos Salud.\n\nOBJETIVO\n\nAnalizar la consulta del usuario e identificar:\n- categoria\n- prestacion\n- plan\n- atributo\n- tema\n\nDebes responder únicamente JSON válido, con este formato:\n\n{\n  \"categoria\": \"\",\n  \"prestacion\": \"\",\n  \"plan\": \"\",\n  \"atributo\": \"\",\n  \"tema\": \"\"\n}\n\nREGLAS GENERALES\n\n- Utilizar exactamente los nombres definidos en las listas de categorías, prestaciones,\n  planes, atributos y temas de este prompt (el schema de salida ya restringe los valores\n  posibles, así que si no encontrás un match exacto en la consulta, devolvé \"\").\n- Si el usuario consulta una categoría general, completar únicamente categoria y dejar\n  prestacion vacía.\n- Si el usuario consulta una prestación puntual, completar categoria y prestacion.\n- Si menciona un plan específico, completar plan. Si menciona varios planes o dice\n  \"todos los planes\", dejar plan vacío. Nunca concatenar varios planes.\n- Identificar atributo cuando la consulta se refiera a una característica de una\n  prestación (coseguro, cobertura, carencia, autorización, límite).\n- Identificar tema cuando la consulta se refiera a trámites, gestiones o preguntas\n  frecuentes (ver TEMAS FAQ VÁLIDOS).\n\nREGLA ESPECIAL PARA FAQS\n\nCuando identifiques un tema FAQ:\n- No inferir categoria, prestacion, plan ni atributo — completar únicamente tema y\n  dejar el resto vacío, salvo que esos campos estén explícitamente presentes en la\n  consulta.\n- Nunca asumir COBERTURA, COSEGURO, AUTORIZACION, CARENCIA o LIMITE por tratarse de\n  una FAQ.\n\nPLANES VÁLIDOS\nPLAN JS CONECTA, PLAN JS AVANZA, PLAN JS IMPULSA, PLAN JS ELITE\n\nATRIBUTOS VÁLIDOS\nCOSEGURO, COBERTURA, CARENCIA, AUTORIZACION, LIMITE\n\nTEMAS FAQ VÁLIDOS\nCOSEGURO, REINTEGRO, AUTORIZACION_PRACTICA, AUTORIZACION_MEDICAMENTO, TOKEN,\nCREDENCIAL, RECETA_ELECTRONICA, FTP, INTERNACION, CIRUGIA_CON_PROTESIS,\nPACIENTE_EN_TRANSITO, ALTA_RECIEN_NACIDO, ALTA_CONYUGE, ALTA_HIJO, BAJA_ADHERENTE,\nACTUALIZAR_DATOS, CAMBIO_EMPLEADOR, DESVINCULACION_LABORAL, JUBILACION, TRASLADO,\nSEPELIO, UNIFICACION_APORTES, DESUNIFICACION_APORTES, PROGRAMAS_ESPECIALES\n\nCATEGORÍAS VÁLIDAS\nCONSULTAS MÉDICAS, PRESTACIONES BIOQUÍMICAS, PRÁCTICAS DE DIAGNÓSTICO Y TRATAMIENTO,\nREHABILITACIÓN MÉDICA, SALUD MENTAL, NUTRICIÓN, ANTICONCEPTIVOS ORALES,\nDIU INTRAUTERINO, IMPLANTE SUBDÉRMICO, ECOGRAFÍAS 3D, 4D Y 5D, ÓPTICA, INTERNACIONES,\nINTERVENCIONES QUIRÚRGICAS, OFTALMOLOGÍA, PRÓTESIS, ORTOPEDIA, FARMACIA,\nODONTOLOGÍA, PROGRAMAS ESPECIALES, ESTÉTICA, ACCIDENTES, SERVICIOS ADICIONALES,\nSERVICIOS OPCIONALES, CARENCIAS\n\nPRESTACIONES VÁLIDAS\nCONSULTA EN CONSULTORIO, CONSULTA EN DOMICILIO, CONSULTA POR TELEMEDICINA,\nANÁLISIS BIOQUÍMICOS GENERALES, ANÁLISIS BIOQUÍMICOS INCLUIDOS EN INNOVACIÓN\nTECNOLÓGICA, ANÁLISIS BIOQUÍMICOS DE ALTA COMPLEJIDAD, BAJA COMPLEJIDAD,\nMEDIA COMPLEJIDAD, ALTA COMPLEJIDAD, INCLUIDAS EN INNOVACIÓN TECNOLÓGICA,\nKINESIOLOGÍA FISIOTERAPIA Y MAGNETOTERAPIA, TERAPIA OCUPACIONAL, FONOAUDIOLOGÍA,\nPSICOLOGÍA, PSIQUIATRÍA, PSICOPEDAGOGÍA, PSICODIAGNÓSTICO, ANAMNESIS,\nENTREGA DE PLAN, CONTROLES, PROVISIÓN CON FICHA DE TRATAMIENTO PROLONGADO,\nCOLOCACIÓN Y DISPOSITIVO CONVENCIONAL, COLOCACIÓN Y DISPOSITIVO LIBERADOR DE\nHORMONAS, COLOCACIÓN Y DISPOSITIVO SUBDÉRMICO, ECOGRAFÍAS TRIDIMENSIONALES,\nLENTES MENORES DE 15 AÑOS, LENTES MAYORES DE 15 AÑOS, HABITACIÓN,\nHABITACIÓN CON CAMA ACOMPAÑANTE, HABITACIÓN PRIVADA, INTERNACIONES PSIQUIÁTRICAS,\nPRÁCTICAS DE DIAGNÓSTICO Y TRATAMIENTO INCLUIDAS EN INNOVACIÓN TECNOLÓGICA,\nCONVENCIONALES, CIRUGÍAS REFRACTIVAS, PRÓTESIS E IMPLANTES INTERNOS NACIONALES\nPERMANENTES, PRÓTESIS IMPORTADAS, ÓRTESIS Y PRÓTESIS EXTERNAS,\nINSUMOS DE ORTOPEDIA Y ÓRTESIS, PLANTILLAS Y CALZADO ORTOPÉDICO,\nMEDICAMENTOS AMBULATORIOS, MEDICAMENTOS EN INTERNACIÓN,\nMEDICAMENTOS INHERENTES A PROGRAMAS ESPECIALES, PRÁCTICAS GENERALES,\nORTOPEDIA O CORRECCIÓN DE MALPOSICIONES, ORTODONCIA, PRÓTESIS ODONTOLÓGICAS,\nIMPLANTES, PROGRAMA MATERNO INFANTIL, NIVEL I, NIVEL II, NIVEL III,\nCOBERTURA DE ACCIDENTES, INTERCONSULTA DE SEGUNDA OPINIÓN,\nDESCUENTO EN MEDICAMENTOS, EXTRACCIÓN DE CÉLULAS MADRE DEL CORDÓN UMBILICAL,\nSERVICIO DE SEPELIO, CESANTÍA\n\nMAPEO DE ATRIBUTOS\ncoseguro → COSEGURO\ncopago → COSEGURO\ncarencia → CARENCIA\nrequiere autorización → AUTORIZACION\nrequieren autorización → AUTORIZACION\nautorización → AUTORIZACION\ncobertura → COBERTURA\nlímite → LIMITE\nlimite → LIMITE\n\nMAPEO DE TEMAS\nreintegro → REINTEGRO\ntoken → TOKEN\ncredencial → CREDENCIAL\nficha de tratamiento prolongado → FTP\nftp → FTP\ninternación → INTERNACION\ninternacion → INTERNACION\ncirugía con prótesis → CIRUGIA_CON_PROTESIS\ncirugia con protesis → CIRUGIA_CON_PROTESIS\npaciente en tránsito → PACIENTE_EN_TRANSITO\npaciente en transito → PACIENTE_EN_TRANSITO\nrecién nacido → ALTA_RECIEN_NACIDO\nrecien nacido → ALTA_RECIEN_NACIDO\nalta de cónyuge → ALTA_CONYUGE\nalta de conyuge → ALTA_CONYUGE\nalta de hijo → ALTA_HIJO\nalta de un hijo → ALTA_HIJO\nbaja de adherente → BAJA_ADHERENTE\ndar de baja a un adherente → BAJA_ADHERENTE\nactualizar datos → ACTUALIZAR_DATOS\ncambiar empleador → CAMBIO_EMPLEADOR\ncambio de empleador → CAMBIO_EMPLEADOR\ndejé de trabajar → DESVINCULACION_LABORAL\ndeje de trabajar → DESVINCULACION_LABORAL\njubilación → JUBILACION\njubilacion → JUBILACION\ntraslado → TRASLADO\nsepelio → SEPELIO\nunificar aportes → UNIFICACION_APORTES\ndesunificar aportes → DESUNIFICACION_APORTES\nreceta electrónica → RECETA_ELECTRONICA\nreceta electronica → RECETA_ELECTRONICA\nprograma especial → PROGRAMAS_ESPECIALES\nprogramas especiales → PROGRAMAS_ESPECIALES\n\nEJEMPLOS\n\nConsulta: ¿Cómo solicito una credencial?\nRespuesta: {\"categoria\":\"\",\"prestacion\":\"\",\"plan\":\"\",\"atributo\":\"\",\"tema\":\"CREDENCIAL\"}\n\nConsulta: ¿Qué es un coseguro?\nRespuesta: {\"categoria\":\"\",\"prestacion\":\"\",\"plan\":\"\",\"atributo\":\"\",\"tema\":\"COSEGURO\"}\n\nConsulta: ¿Cómo doy de alta a mi hijo recién nacido?\nRespuesta: {\"categoria\":\"\",\"prestacion\":\"\",\"plan\":\"\",\"atributo\":\"\",\"tema\":\"ALTA_HIJO\"}\n\nConsulta: ¿Qué cobertura tiene ortodoncia en el plan Impulsa?\nRespuesta: {\"categoria\":\"ODONTOLOGÍA\",\"prestacion\":\"ORTODONCIA\",\"plan\":\"PLAN JS IMPULSA\",\"atributo\":\"COBERTURA\",\"tema\":\"\"}\n\nConsulta: ¿Qué prestaciones tienen coseguro?\nRespuesta: {\"categoria\":\"\",\"prestacion\":\"\",\"plan\":\"\",\"atributo\":\"COSEGURO\",\"tema\":\"\"}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        528,
+        96
+      ],
+      "id": "6505d2d3-9798-45ce-b31c-ca302396014e",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"categoria\": {\n      \"type\": \"string\",\n      \"enum\": [\"\", \"CONSULTAS MÉDICAS\", \"PRESTACIONES BIOQUÍMICAS\", \"PRÁCTICAS DE DIAGNÓSTICO Y TRATAMIENTO\", \"REHABILITACIÓN MÉDICA\", \"SALUD MENTAL\", \"NUTRICIÓN\", \"ANTICONCEPTIVOS ORALES\", \"DIU INTRAUTERINO\", \"IMPLANTE SUBDÉRMICO\", \"ECOGRAFÍAS 3D, 4D Y 5D\", \"ÓPTICA\", \"INTERNACIONES\", \"INTERVENCIONES QUIRÚRGICAS\", \"OFTALMOLOGÍA\", \"PRÓTESIS\", \"ORTOPEDIA\", \"FARMACIA\", \"ODONTOLOGÍA\", \"PROGRAMAS ESPECIALES\", \"ESTÉTICA\", \"ACCIDENTES\", \"SERVICIOS ADICIONALES\", \"SERVICIOS OPCIONALES\", \"CARENCIAS\"]\n    },\n    \"prestacion\": {\n      \"type\": \"string\",\n      \"enum\": [\"\", \"CONSULTA EN CONSULTORIO\", \"CONSULTA EN DOMICILIO\", \"CONSULTA POR TELEMEDICINA\", \"ANÁLISIS BIOQUÍMICOS GENERALES\", \"ANÁLISIS BIOQUÍMICOS INCLUIDOS EN INNOVACIÓN TECNOLÓGICA\", \"ANÁLISIS BIOQUÍMICOS DE ALTA COMPLEJIDAD\", \"BAJA COMPLEJIDAD\", \"MEDIA COMPLEJIDAD\", \"ALTA COMPLEJIDAD\", \"INCLUIDAS EN INNOVACIÓN TECNOLÓGICA\", \"KINESIOLOGÍA, FISIOTERAPIA Y MAGNETOTERAPIA\", \"TERAPIA OCUPACIONAL\", \"FONOAUDIOLOGÍA\", \"PSICOLOGÍA\", \"PSIQUIATRÍA\", \"PSICOPEDAGOGÍA\", \"PSICODIAGNÓSTICO\", \"ANAMNESIS\", \"ENTREGA DE PLAN\", \"CONTROLES\", \"PROVISIÓN CON FICHA DE TRATAMIENTO PROLONGADO\", \"COLOCACIÓN Y DISPOSITIVO CONVENCIONAL\", \"COLOCACIÓN Y DISPOSITIVO LIBERADOR DE HORMONAS\", \"COLOCACIÓN Y DISPOSITIVO SUBDÉRMICO\", \"ECOGRAFÍAS TRIDIMENSIONALES\", \"LENTES MENORES DE 15 AÑOS\", \"LENTES MAYORES DE 15 AÑOS\", \"HABITACIÓN\", \"HABITACIÓN CON CAMA ACOMPAÑANTE\", \"HABITACIÓN PRIVADA\", \"INTERNACIONES PSIQUIÁTRICAS\", \"PRÁCTICAS DE DIAGNÓSTICO Y TRATAMIENTO INCLUIDAS EN INNOVACIÓN TECNOLÓGICA\", \"CONVENCIONALES\", \"CIRUGÍAS REFRACTIVAS\", \"PRÓTESIS E IMPLANTES INTERNOS NACIONALES PERMANENTES\", \"PRÓTESIS IMPORTADAS\", \"ÓRTESIS Y PRÓTESIS EXTERNAS\", \"INSUMOS DE ORTOPEDIA Y ÓRTESIS\", \"PLANTILLAS Y CALZADO ORTOPÉDICO\", \"MEDICAMENTOS AMBULATORIOS\", \"MEDICAMENTOS EN INTERNACIÓN\", \"MEDICAMENTOS INHERENTES A PROGRAMAS ESPECIALES\", \"PRÁCTICAS GENERALES\", \"ORTOPEDIA O CORRECCIÓN DE MALPOSICIONES\", \"ORTODONCIA\", \"PRÓTESIS ODONTOLÓGICAS\", \"IMPLANTES\", \"PROGRAMA MATERNO INFANTIL\", \"NIVEL I\", \"NIVEL II\", \"NIVEL III\", \"COBERTURA DE ACCIDENTES\", \"INTERCONSULTA DE SEGUNDA OPINIÓN\", \"DESCUENTO EN MEDICAMENTOS\", \"EXTRACCIÓN DE CÉLULAS MADRE DEL CORDÓN UMBILICAL\", \"SERVICIO DE SEPELIO\", \"CESANTÍA\"]\n    },\n    \"plan\": {\n      \"type\": \"string\",\n      \"enum\": [\"\", \"PLAN JS CONECTA\", \"PLAN JS AVANZA\", \"PLAN JS IMPULSA\", \"PLAN JS ELITE\"]\n    },\n    \"atributo\": {\n      \"type\": \"string\",\n      \"enum\": [\"\", \"COSEGURO\", \"COBERTURA\", \"CARENCIA\", \"AUTORIZACION\", \"LIMITE\"]\n    },\n    \"tema\": {\n      \"type\": \"string\",\n      \"enum\": [\"\", \"COSEGURO\", \"REINTEGRO\", \"AUTORIZACION_PRACTICA\", \"AUTORIZACION_MEDICAMENTO\", \"TOKEN\", \"CREDENCIAL\", \"RECETA_ELECTRONICA\", \"FTP\", \"INTERNACION\", \"CIRUGIA_CON_PROTESIS\", \"PACIENTE_EN_TRANSITO\", \"ALTA_RECIEN_NACIDO\", \"ALTA_CONYUGE\", \"ALTA_HIJO\", \"BAJA_ADHERENTE\", \"ACTUALIZAR_DATOS\", \"CAMBIO_EMPLEADOR\", \"DESVINCULACION_LABORAL\", \"JUBILACION\", \"TRASLADO\", \"SEPELIO\", \"UNIFICACION_APORTES\", \"DESUNIFICACION_APORTES\", \"PROGRAMAS_ESPECIALES\"]\n    }\n  },\n  \"required\": [\"categoria\", \"prestacion\", \"plan\", \"atributo\", \"tema\"]\n}",
+        "autoFix": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        752,
+        368
+      ],
+      "id": "565a43de-2905-43f8-851c-b81a187a4337",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        848
+      ],
+      "id": "360cc727-b5cc-4ba6-876c-ed992bd0dcf3",
+      "name": "Ollama Chat Model3",
+      "credentials": {
+        "ollamaApi": {
+          "id": "fWDSBiytalcI34Py",
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "db2fd393-b099-40ff-867a-c5c839bd532d",
+              "name": "pregunta_original",
+              "value": "={{ $('Telegram Trigger').item.json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "e9a1cf3a-9ce4-4bfb-b38a-139339cec743",
+              "name": "categoria",
+              "value": "={{ $json.output.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "55624740-ad44-468d-b57a-4c792df3a155",
+              "name": "prestacion",
+              "value": "={{ $json.output.prestacion }}",
+              "type": "string"
+            },
+            {
+              "id": "739ee08e-362b-48df-8922-ef88479889df",
+              "name": "plan",
+              "value": "={{ $json.output.plan }}",
+              "type": "string"
+            },
+            {
+              "id": "97af6066-e272-4b42-ac47-8614c5d28164",
+              "name": "atributo",
+              "value": "={{ $json.output.atributo }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        928,
+        96
+      ],
+      "id": "dcb10eda-f94d-4f0c-87d9-cad7903e6f22",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4.1",
+          "mode": "list",
+          "cachedResultName": "gpt-4.1"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1856,
+        384
+      ],
+      "id": "1d400879-8dc9-441e-b2cc-a7225d766fc3",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        400
+      ],
+      "id": "42c7020f-29d5-4d00-910c-75ded648fe66",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "chat_logs",
+          "mode": "list",
+          "cachedResultName": "chat_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tokens_input": "=",
+            "tokens_output": "=",
+            "session_id": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+            "respuesta": "={{ $('AI Agent').item.json.output }}",
+            "modelo": "Ollama",
+            "pregunta": "={{ $('Telegram Trigger').item.json.message.text }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "pregunta",
+              "displayName": "pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "respuesta",
+              "displayName": "respuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "documentos_rag",
+              "displayName": "documentos_rag",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "tokens_input",
+              "displayName": "tokens_input",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tokens_output",
+              "displayName": "tokens_output",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "modelo",
+              "displayName": "modelo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1792,
+        -64
+      ],
+      "id": "92802918-6873-4c57-85f1-97ac833b2a32",
+      "name": "chats logs",
+      "credentials": {
+        "postgres": {
+          "id": "7SUdyUiJsMX1YH3u",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.callback_query.message.chat.id }}",
+        "text": "=😔 Gracias por tu feedback.   \n\n¿Qué podríamos mejorar de la respuesta?",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        -112
+      ],
+      "id": "6343b1a4-0c21-4e49-a78c-bb21eb4e5dad",
+      "name": "Send a text message1",
+      "webhookId": "3f98ba5a-9aaf-48a1-80a3-5c01b4578a81",
+      "credentials": {
+        "telegramApi": {
+          "id": "ONff4x3BF87l6CDr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feedback",
+          "mode": "list",
+          "cachedResultName": "feedback"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "esperando_comentario": "={{ false }}",
+            "id": "={{ $json.id }}",
+            "comentario": "={{ $('Telegram Trigger').first().json.message.text }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "pregunta",
+              "displayName": "pregunta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "respuesta",
+              "displayName": "respuesta",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "calificacion",
+              "displayName": "calificacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "comentario",
+              "displayName": "comentario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha",
+              "displayName": "fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_log_id",
+              "displayName": "chat_log_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "esperando_comentario",
+              "displayName": "esperando_comentario",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        384,
+        -112
+      ],
+      "id": "639fdd45-8d06-4da9-b97e-99000441b99d",
+      "name": "Update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "7SUdyUiJsMX1YH3u",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "feedback",
+          "mode": "list",
+          "cachedResultName": "feedback"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "session_id",
+              "value": "={{ String(\n  $('Telegram Trigger').first().json.message?.from?.id\n  ?? $('Telegram Trigger').first().json.callback_query?.from?.id\n) }}"
+            },
+            {
+              "column": "esperando_comentario",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -352,
+        48
+      ],
+      "id": "6aa31b90-7569-4378-b7e5-39bb8b57c640",
+      "name": "Select rows from a table",
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "7SUdyUiJsMX1YH3u",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ae1138a9-ff2c-4eeb-ba30-6da74ae0fc62",
+              "leftValue": "={{ $('Telegram Trigger').first().json.callback_query?.data?.includes('feedback_no') }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -192,
+        64
+      ],
+      "id": "6a21f4cc-eb2b-415d-ad4c-837d52445d06",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.session_id }}",
+        "text": "Gracias por tu comentario, lo tendremos en cuenta para proximas mejoras!!!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        -112
+      ],
+      "id": "a3967e2d-7828-447d-86c5-83759681ee2d",
+      "name": "Send a text message2",
+      "webhookId": "d903f32b-63e4-4f76-a03b-fe145a50aae0",
+      "credentials": {
+        "telegramApi": {
+          "id": "ONff4x3BF87l6CDr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "jerigo_usuarios",
+        "limit": 1,
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "telegram_chat_id",
+              "condition": "eq",
+              "keyValue": "={{\n  $json.message?.chat?.id\n  ?? $json.callback_query?.message?.chat?.id\n  ?? $json.callback_query?.from?.id\n}}"
+            },
+            {
+              "keyName": "estado",
+              "condition": "eq",
+              "keyValue": "Activo"
+            },
+            {
+              "keyName": "canal",
+              "condition": "eq",
+              "keyValue": "Telegram"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -912,
+        64
+      ],
+      "id": "02fce391-8493-4be7-acbd-2439f0940167",
+      "name": "Validar usuario autorizado",
+      "credentials": {
+        "supabaseApi": {
+          "id": "SW2iZW7fwdHKqYQj",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Hola.  JeriGo se encuentra actualmente en una prueba controlada.  Tu usuario no está habilitado para participar de las pruebas.  Si creés que esto es un error, comunicate con el equipo responsable del proyecto.",
+        "additionalFields": {
+          "appendAttribution": true
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -368,
+        208
+      ],
+      "id": "028c9d5f-5df2-4253-8ce5-6e78f0d89161",
+      "name": "Send a text message3",
+      "webhookId": "07bd48d2-7e94-43a7-997c-a1eea1c64f2d",
+      "alwaysOutputData": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "ONff4x3BF87l6CDr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d95d1853-4397-4bf9-bad7-e53efc74c9f0",
+              "leftValue": "={{ $json.telegram_chat_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "number",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -592,
+        64
+      ],
+      "id": "01167cbd-ba25-4230-b440-a0c012ea10f5",
+      "name": "¿Usuario autorizado?"
+    },
+    {
+      "parameters": {
+        "jsCode": "throw new Error(`\n🚨 ALERTA OPERATIVA\n\nWorkflow: JeriGO - Chat WhatsApp\nEntorno: Producción\n\nIncidente:\nEl agente no pudo completar la consulta solicitada.\n\nDependencia afectada:\nOpenAI GPT\n\nMensaje:\nRate limit exceeded (HTTP 429)\n\nConsecuencia:\nLos usuarios podrían experimentar demoras o falta de respuesta.\n\nRecomendación:\nRevisar consumo de tokens y límites de la cuenta.\n\nCriticidad:\nALTA\n`);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        848
+      ],
+      "id": "95a0b95d-492d-4380-b066-b86d3de2cba6",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fbcc03f1-6df9-4eda-b879-45d91a7fab01",
+              "name": "chat_id",
+              "value": "={{\n$json.message?.chat?.id ||\n$json.callback_query?.message?.chat?.id\n}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -992,
+        -160
+      ],
+      "id": "f84c5947-05e2-48ed-9fdf-a65e490f727c",
+      "name": "Set chat_id"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "workflow_runtime",
+          "mode": "list",
+          "cachedResultName": "workflow_runtime"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "chat_id": "={{ $json.chat_id }}",
+            "mensaje": "={{ $('Telegram Trigger').item.json.message.text }}",
+            "workflow_name": "JeriGO - Chat Whastapp"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "chat_id",
+              "displayName": "chat_id",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensaje",
+              "displayName": "mensaje",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        -768,
+        -160
+      ],
+      "id": "0f3db9fe-8a91-4a4f-a547-89a68b834185",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "7SUdyUiJsMX1YH3u",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "BAAI/bge-m3",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsHuggingFaceInference",
+      "typeVersion": 1,
+      "position": [
+        608,
+        848
+      ],
+      "id": "71d8617e-3721-4b43-8ea5-c156de4aec2d",
+      "name": "Embeddings HuggingFace Inference",
+      "credentials": {
+        "huggingFaceApi": {
+          "id": "ZAjnlxEx6sSGgRnE",
+          "name": "Hugging Face account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "dimensions": 1536
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        544
+      ],
+      "id": "3571c333-842e-4e17-88d4-96d2b3d0799d",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reranker Cohere": {
+      "ai_reranker": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_reranker",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validar usuario autorizado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Set chat_id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "chats logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model3": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        []
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Structured Output Parser1",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar usuario autorizado": {
+      "main": [
+        [
+          {
+            "node": "¿Usuario autorizado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Usuario autorizado?": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a text message1": {
+      "main": [
+        []
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        []
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        []
+      ]
+    },
+    "Set chat_id": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings HuggingFace Inference": {
+      "ai_embedding": [
+        []
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store2",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "LbxcSlq28pX0uFpr",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "f0340a59-f43f-4d16-8dea-e80395b41055",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a926c9710c129004cb72e65197c5848751ff5571ec080fb3b3a92c7995412a33"
+  },
+  "nodeGroups": [],
+  "id": "MoNX5kmPN1uaZnY9",
+  "tags": []
+}

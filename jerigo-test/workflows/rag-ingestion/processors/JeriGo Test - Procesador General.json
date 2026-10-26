@@ -1,0 +1,447 @@
+{
+  "name": "JeriGo Test - Procesador de documentos generales",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst text = input.texto || '';\n\nconst chunkSize = 600;\nconst overlap = 40;\nconst step = chunkSize - overlap;\n\nconst sections = text.split('##');\n\nconst output = [];\n\nfor (const section of sections) {\n\tconst cleaned = section.trim();\n\n\tif (!cleaned) continue;\n\n\tfor (let start = 0; start < cleaned.length; start += step) {\n\t\toutput.push({\n\t\t\tjson: {\n\t\t\t\tfile_name: input.file_name || '',\n\t\t\t\tchunk: cleaned.substring(start, start + chunkSize).trim()\n\t\t\t}\n\t\t});\n\t}\n}\n\nreturn output;"
+      },
+      "id": "1d8e2fa3-8160-4f2c-9607-6f934f623e68",
+      "name": "Dividir documento general",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analiza el siguiente fragmento de documento para un sistema RAG.\n\nNombre del documento:\n{{ $('Dividir documento general').item.json.file_name }}\n\nFragmento:\n{{ $json.chunk }}\n\nIMPORTANTE:\n\n- Analiza únicamente el fragmento recibido.\n- El fragmento puede contener una o más prestaciones.\n- Si contiene varias prestaciones, selecciona únicamente la primera prestación completa encontrada.\n- No inventes información.\n- Si un dato no está presente, devuelve una cadena vacía.\n- Devuelve exactamente UN objeto JSON.\n- No devuelvas arrays de objetos.\n- No agregues texto adicional.\n\nExtrae:\n\n1. Plan.\n2. Categoría.\n3. Prestación.\n4. Tipo documental.\n5. Cobertura.\n6. Coseguro.\n7. Carencia.\n8. Requiere autorización previa.\n9. Temas relevantes.\n\nDevuelve únicamente JSON válido con el siguiente formato:\n\n{\n  \"plan\": \"\",\n  \"categoria\": \"\",\n  \"prestacion\": \"\",\n  \"tipo_documento\": \"\",\n  \"cobertura\": \"\",\n  \"coseguro\": \"\",\n  \"carencia\": \"\",\n  \"requiere_autorizacion\": \"\",\n  \"temas\": []\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Eres un especialista en clasificación documental para sistemas RAG de salud.\n\nDebes analizar únicamente el fragmento recibido.\n\nExtrae exclusivamente información presente en el fragmento.\n\nSi un dato no existe en el fragmento, devuelve una cadena vacía.\n\nDevuelve exactamente un único objeto JSON válido.\n\nNunca devuelvas listas de objetos.\nNunca devuelvas múltiples JSON.\nNunca inventes información.\n`"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "24a6f2f8-79a1-408e-b6b0-517d5f4eeb46",
+      "name": "Extraer metadatos generales",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:120b",
+        "options": {
+          "temperature": 0,
+          "topK": 1,
+          "topP": 0.1
+        }
+      },
+      "id": "4c88b77e-9ea0-4450-9a12-cafd92a31621",
+      "name": "Ollama Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        520,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"plan\": \"string\",\n  \"categoria\": \"string\",\n  \"prestacion\": \"string\",\n  \"tipo_documento\": \"string\",\n  \"cobertura\": \"string\",\n  \"coseguro\": \"string\",\n  \"carencia\": \"string\",\n  \"requiere_autorizacion\": \"boolean\",\n  \"temas\": [\n    \"string\"\n  ]\n}",
+        "autoFix": true
+      },
+      "id": "862c958e-3d54-4430-b7e4-88450211ad98",
+      "name": "Structured Output Parser3",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8ba4b1d9-5e66-4c0e-a00d-14ad63c55dba",
+              "name": "pageContent",
+              "value": "={{ $('Dividir documento general').item.json.chunk }}",
+              "type": "string"
+            },
+            {
+              "id": "b1e8cfc8-c6e2-4502-8e07-f0d97ea0dcb5",
+              "name": "plan",
+              "value": "={{ $json.output.plan }}",
+              "type": "string"
+            },
+            {
+              "id": "350f8b78-6ba4-4295-a804-c9e287ee796c",
+              "name": "categoria",
+              "value": "={{ $json.output.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "1412cdef-0af0-4840-8c19-4c0102c40358",
+              "name": "prestacion",
+              "value": "={{ $json.output.prestacion }}",
+              "type": "string"
+            },
+            {
+              "id": "d5606368-8fc6-41b3-a841-de179033e35f",
+              "name": "tipo_documento",
+              "value": "={{ $json.output.tipo_documento }}",
+              "type": "string"
+            },
+            {
+              "id": "53f23d27-717b-41c4-81e8-68d90190e2d8",
+              "name": "cobertura",
+              "value": "={{ $json.output.cobertura }}",
+              "type": "string"
+            },
+            {
+              "id": "1578fc7e-c6c0-4a8d-b86c-371302a6c2d8",
+              "name": "coseguro",
+              "value": "={{ $json.output.coseguro }}",
+              "type": "string"
+            },
+            {
+              "id": "6a45ee13-7ed4-4643-9907-b48ca2bd4458",
+              "name": "carencia",
+              "value": "={{ $json.output.carencia }}",
+              "type": "string"
+            },
+            {
+              "id": "2ba93a5b-c123-41f9-acf7-1ef0a96bea6c",
+              "name": "requiere_autorizacion",
+              "value": "={{ $json.output.requiere_autorizacion }}",
+              "type": "string"
+            },
+            {
+              "id": "f944a58f-7587-43c9-aa8d-9b9d8e1e76b0",
+              "name": "temas",
+              "value": "={{ $json.output.temas }}",
+              "type": "array"
+            },
+            {
+              "id": "1f5cb318-fdfc-47b5-a7d2-deed0de6e41d",
+              "name": "fuente",
+              "value": "={{ $('Dividir documento general').item.json.file_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f506d414-e729-43b9-bf18-d6e3839476ef",
+      "name": "Preparar documento general",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        800,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "document_embeddings_test",
+          "mode": "list",
+          "cachedResultName": "document_embeddings_test"
+        },
+        "options": {
+          "queryName": "match_documents_test"
+        }
+      },
+      "id": "6ab8eb9d-89e3-42ae-880c-8bd5ba6ce2bc",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e173ced8-e54e-4446-aef5-68a54a9810a6",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "pageContent",
+                "value": "={{ $json.pageContent }}"
+              },
+              {
+                "name": "plan",
+                "value": "={{ $json.plan }}"
+              },
+              {
+                "name": "categoria",
+                "value": "={{ $json.categoria }}"
+              },
+              {
+                "name": "prestacion",
+                "value": "={{ $json.prestacion }}"
+              },
+              {
+                "name": "tipo_documento",
+                "value": "={{ $json.tipo_documento }}"
+              },
+              {
+                "name": "cobertura",
+                "value": "={{ $json.cobertura }}"
+              },
+              {
+                "name": "coseguro",
+                "value": "={{ $json.coseguro }}"
+              },
+              {
+                "name": "carencia",
+                "value": "={{ $json.carencia }}"
+              },
+              {
+                "name": "requiere_autorizacion",
+                "value": "={{ String($json.requiere_autorizacion ?? \"\") }}"
+              },
+              {
+                "name": "temas",
+                "value": "={{ JSON.stringify($json.temas ?? []) }}"
+              },
+              {
+                "name": "pregunta",
+                "value": "={{ $json.pregunta }}"
+              },
+              {
+                "name": "subcategoria",
+                "value": "={{ $json.subcategoria }}"
+              },
+              {
+                "name": "resumen",
+                "value": "={{ $json.resumen }}"
+              },
+              {
+                "name": "accion_requerida",
+                "value": "={{ $json.accion_requerida }}"
+              },
+              {
+                "name": "documentacion",
+                "value": "={{ JSON.stringify($json.documentacion ?? []) }}"
+              },
+              {
+                "name": "canales",
+                "value": "={{ JSON.stringify($json.canales ?? []) }}"
+              },
+              {
+                "name": "planes",
+                "value": "={{ JSON.stringify($json.planes ?? []) }}"
+              },
+              {
+                "name": "tema",
+                "value": "={{ $json.tema }}"
+              },
+              {
+                "name": "valor",
+                "value": "={{ $json.valor }}"
+              },
+              {
+                "name": "condiciones",
+                "value": "={{ $json.condiciones }}"
+              },
+              {
+                "name": "vigencia",
+                "value": "={{ $json.vigencia }}"
+              },
+              {
+                "name": "fuente",
+                "value": "={{ $json.fuente }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ed73b1ef-6d55-476d-8173-dc0622cea917",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 10000
+      },
+      "id": "48be4941-6e83-44bc-a8fc-dcbc3c441056",
+      "name": "Character Text Splitter1",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "d394552a-ce53-4b89-b945-92847dc5d35b",
+      "name": "Al recibir documento",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Al recibir documento": {
+      "main": [
+        [
+          {
+            "node": "Dividir documento general",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dividir documento general": {
+      "main": [
+        [
+          {
+            "node": "Extraer metadatos generales",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer metadatos generales": {
+      "main": [
+        [
+          {
+            "node": "Preparar documento general",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar documento general": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extraer metadatos generales",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extraer metadatos generales",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

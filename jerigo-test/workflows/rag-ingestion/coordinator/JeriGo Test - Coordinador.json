@@ -1,0 +1,811 @@
+{
+  "name": "JeriGo Test - Coordinador de ingesta",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "CONFIGURE_TEST_FOLDER_ID",
+          "mode": "id"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "id": "2df7a863-8836-4514-a5dd-b2d13aec671c",
+      "name": "Google Drive Trigger1",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{$node[\"Google Drive Trigger1\"].json[\"id\"]}}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "a9a9bf68-e8fe-4b7d-b16e-2c5a17dbf7e6",
+      "name": "Descarga archivo",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {}
+      },
+      "id": "c7a58362-179a-4037-be6b-503d460596c7",
+      "name": "Extraer texto1",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "24a6faa5-17dd-4576-bb4c-84ea2d375808",
+              "name": "texto",
+              "value": "={{ $json.data.replace(/\\\\n/g, '\\n') }}\n",
+              "type": "string"
+            },
+            {
+              "id": "f3818480-acb6-4454-a737-b02f40dcacfd",
+              "name": "file_name",
+              "value": "={{ $('Google Drive Trigger1').item.json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3cce319c-a55d-420d-b186-cee43298cb4a",
+      "name": "normalizar campos",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const fileName = $json.file_name || '';\nlet tipo_documental;\nif (/^FAQ__/i.test(fileName)) tipo_documental = 'faq';\nelse if (/^COSEGURO__/i.test(fileName)) tipo_documental = 'coseguro';\nelse if (/^GENERAL__/i.test(fileName)) tipo_documental = 'general';\nelse throw new Error('Tipo documental no identificado. En testing, usa los prefijos FAQ__, COSEGURO__ o GENERAL__.');\nreturn [{ json: { ...$json, tipo_documental, google_file_id: $('Google Drive Trigger1').item.json.id } }];"
+      },
+      "id": "b1450b86-e26a-4dca-b4d8-f054ef19b231",
+      "name": "Clasificar tipo documental",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.tipo_documental }}",
+                    "rightValue": "faq",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "cc3520eb-e14f-4132-bf40-b8eaa7ebee03"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "FAQ"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.tipo_documental }}",
+                    "rightValue": "coseguro",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "bd56b0de-1add-4019-a3d6-5c9cfc298b89"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "COSEGURO"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.tipo_documental }}",
+                    "rightValue": "general",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "922fbc96-c9a0-4223-abb2-fdcd5feea3aa"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "GENERAL"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e6fd6151-052c-484c-b610-bd1d9b3a3cce",
+      "name": "Enrutar tipo documental",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2170,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "__CONFIGURAR_EN_N8N__",
+          "mode": "id",
+          "cachedResultName": "JeriGo Test - Procesador FAQ"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "file_name": "={{ $json.file_name }}",
+            "texto": "={{ $json.texto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "8bfc0935-8011-4e27-ad1c-e6b64b3ffaf4",
+      "name": "Llamar subflujo FAQ",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2450,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "__CONFIGURAR_EN_N8N__",
+          "mode": "id",
+          "cachedResultName": "JeriGo Test - Procesador de coseguros"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "file_name": "={{ $json.file_name }}",
+            "texto": "={{ $json.texto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "628e195b-3033-4000-ad83-7981fdad2ae1",
+      "name": "Llamar subflujo COSEGURO",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2450,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "__CONFIGURAR_EN_N8N__",
+          "mode": "id",
+          "cachedResultName": "JeriGo Test - Procesador de documentos generales"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "file_name": "={{ $json.file_name }}",
+            "texto": "={{ $json.texto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "file_name",
+              "displayName": "file_name",
+              "required": true,
+              "type": "string"
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "id": "f6608059-bf07-4f98-9386-7dfb7cb55885",
+      "name": "Llamar subflujo GENERAL",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2450,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "05b5937a-9130-41f6-90e1-d767d6f6a232",
+      "name": "Loop Over Items",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        0,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "value": "={{JSON.stringify($json)}}",
+        "dataPropertyName": "hash"
+      },
+      "id": "78971b41-61ed-4318-9f9b-785e84ffbb88",
+      "name": "hash",
+      "type": "n8n-nodes-base.crypto",
+      "typeVersion": 2,
+      "position": [
+        1210,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "document_control_test",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "google_file_id",
+              "condition": "eq",
+              "keyValue": "={{ $(\"Google Drive Trigger1\").item.json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "23b018a0-3d3a-40d0-a76d-32b6b0c9624f",
+      "name": "Get many rows",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1450,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map(item => item.json).filter(row => row.google_file_id);\nconst current = $('Clasificar tipo documental').item.json;\nconst hash = String($('hash').item.json.hash || '').trim();\nconst fileId = String(current.google_file_id);\nconst existing = rows.find(row => String(row.google_file_id) === fileId);\nconst storedHash = String(existing?.hash || '').trim();\nconst estado = !existing ? 'nuevo' : storedHash === hash ? 'sin_cambios' : 'actualizado';\nreturn [{ json: { ...current, hash, estado, control_id: existing?.id ?? null } }];"
+      },
+      "id": "e32665d6-1baf-448c-8ff5-49907134c69d",
+      "name": "Comparar hash y estado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1690,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6d6e8d78-b622-4c40-acb8-427b6f8f7c59",
+              "leftValue": "={{ $json.estado }}",
+              "rightValue": "sin_cambios",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "1e940131-ec12-4410-82e1-1441d5193220",
+      "name": "?Documento sin cambios?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1930,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{ json: { procesado: true } }];"
+      },
+      "id": "0fd44497-8052-4ce2-b717-c08cf928798d",
+      "name": "Subflujo completado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2700,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Comparar hash y estado').item.json.estado }}",
+                    "rightValue": "nuevo",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "04320dbd-acf3-40ad-8397-7d04c527ed13"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "nuevo"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Comparar hash y estado').item.json.estado }}",
+                    "rightValue": "actualizado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "b0d429f9-e8f6-493d-9beb-d5ee0380d07c"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "actualizado"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ad466423-f14b-4276-8000-313707d341b6",
+      "name": "Guardar control del documento",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2940,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "tableId": "document_control_test",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_name",
+              "fieldValue": "={{ $('Comparar hash y estado').item.json.file_name }}"
+            },
+            {
+              "fieldId": "google_file_id",
+              "fieldValue": "={{ $('Comparar hash y estado').item.json.google_file_id }}"
+            },
+            {
+              "fieldId": "hash",
+              "fieldValue": "={{ $('Comparar hash y estado').item.json.hash }}"
+            }
+          ]
+        }
+      },
+      "id": "81c7db5a-80b4-4778-aa03-cd24a693a3c8",
+      "name": "Registrar documento nuevo",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3190,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "document_control_test",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "google_file_id",
+              "condition": "eq",
+              "keyValue": "={{ $('Comparar hash y estado').item.json.google_file_id }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "file_name",
+              "fieldValue": "={{ $('Comparar hash y estado').item.json.file_name }}"
+            },
+            {
+              "fieldId": "hash",
+              "fieldValue": "={{ $('Comparar hash y estado').item.json.hash }}"
+            }
+          ]
+        }
+      },
+      "id": "defcbb89-6bb9-4e13-a4f7-b41ea60d0b9d",
+      "name": "Actualizar hash del documento",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        3190,
+        300
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Descarga archivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descarga archivo": {
+      "main": [
+        [
+          {
+            "node": "Extraer texto1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer texto1": {
+      "main": [
+        [
+          {
+            "node": "normalizar campos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "normalizar campos": {
+      "main": [
+        [
+          {
+            "node": "Clasificar tipo documental",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar tipo documental": {
+      "main": [
+        [
+          {
+            "node": "hash",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "hash": {
+      "main": [
+        [
+          {
+            "node": "Get many rows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many rows": {
+      "main": [
+        [
+          {
+            "node": "Comparar hash y estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comparar hash y estado": {
+      "main": [
+        [
+          {
+            "node": "?Documento sin cambios?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?Documento sin cambios?": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enrutar tipo documental",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar tipo documental": {
+      "main": [
+        [
+          {
+            "node": "Llamar subflujo FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Llamar subflujo COSEGURO",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Llamar subflujo GENERAL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar subflujo FAQ": {
+      "main": [
+        [
+          {
+            "node": "Subflujo completado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar subflujo COSEGURO": {
+      "main": [
+        [
+          {
+            "node": "Subflujo completado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar subflujo GENERAL": {
+      "main": [
+        [
+          {
+            "node": "Subflujo completado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Subflujo completado": {
+      "main": [
+        [
+          {
+            "node": "Guardar control del documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar control del documento": {
+      "main": [
+        [
+          {
+            "node": "Registrar documento nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar hash del documento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar documento nuevo": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar hash del documento": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

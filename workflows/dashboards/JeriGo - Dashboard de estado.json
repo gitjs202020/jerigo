@@ -1,0 +1,339 @@
+{
+  "name": "JeriGo - Dashboard de estado",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "estado-servicios",
+        "authentication": "basicAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "f6594be9-fedc-4f0c-a6f7-5dfd7a44ec11",
+      "name": "Abrir dashboard",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        -112
+      ],
+      "webhookId": "bd2573ca-9c18-4225-bcaa-51021f83831a",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "RA3YWFaR96zNs7TG",
+          "name": "Unnamed credential 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "filters": {
+          "activeWorkflows": true,
+          "excludePinnedData": true
+        },
+        "requestOptions": {}
+      },
+      "id": "ae974120-832b-4c2e-aabd-35a5a9c0cacb",
+      "name": "Obtener workflows",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        240,
+        0
+      ],
+      "executeOnce": true,
+      "credentials": {
+        "n8nApi": {
+          "id": "NmAC7dPq3DJK6QzC",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return [\n  { json: { id: 'RDvqE9FfPL7UVHLM' } },\n  { json: { id: 'MoNX5kmPN1uaZnY9' } },\n  { json: { id: 'LbxcSlq28pX0uFpr' } }\n];"
+      },
+      "id": "821e146e-9dca-4cf4-b772-f11193cece8f",
+      "name": "Workflows a mostrar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        192
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "limit": 300,
+        "filters": {
+          "workflowId": {
+            "__rl": true,
+            "mode": "id",
+            "value": "={{ $json.id }}"
+          }
+        },
+        "options": {},
+        "requestOptions": {}
+      },
+      "id": "0ca8b35a-1d88-415c-9246-1e24c0930d59",
+      "name": "Obtener ejecuciones",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        464,
+        0
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "NmAC7dPq3DJK6QzC",
+          "name": "n8n account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Ejecuciones a consultar en detalle (una sola vez, luego quedan en caché):\n// - fallidas reales sin detalle de error guardado\n// - las últimas 50 ejecuciones reales de Chat WhatsApp sin usuario guardado\nconst store = $getWorkflowStaticData('global');\nconst errCache = store.errDetails || {};\nconst userCache = store.userDetails || {};\nconst ids = ['RDvqE9FfPL7UVHLM', 'MoNX5kmPN1uaZnY9', 'LbxcSlq28pX0uFpr'];\nconst TELEGRAM = 'MoNX5kmPN1uaZnY9';\nconst MAX = 25;\nconst execs = $input.all().map(i => i.json)\n  .filter(e => e && e.id && ids.includes(String(e.workflowId)) && e.mode !== 'manual' && (e.status === 'success' || e.status === 'error' || e.status === 'crashed'))\n  .sort((a, b) => new Date(b.startedAt) - new Date(a.startedAt));\nconst want = new Set();\nexecs.filter(e => String(e.workflowId) === TELEGRAM).slice(0, 50)\n  .forEach(e => { if (!userCache[String(e.id)]) want.add(String(e.id)); });\nexecs.filter(e => e.status !== 'success')\n  .forEach(e => { if (!errCache[String(e.id)]) want.add(String(e.id)); });\nreturn Array.from(want).slice(0, MAX).map(id => ({ json: { id } }));"
+      },
+      "id": "0bc7d6b7-0791-45e1-b9d1-fef67ae363e3",
+      "name": "Ejecuciones a detallar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        192
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "tiene-id",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "2713cb3c-004b-43a9-a29d-bbb5804527eb",
+      "name": "¿Hay ejecuciones nuevas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1008,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "execution",
+        "operation": "get",
+        "executionId": "={{ $json.id }}",
+        "options": {
+          "activeWorkflows": true
+        },
+        "requestOptions": {}
+      },
+      "id": "539fcea8-bcad-4f41-9ca2-0e49bf23c22d",
+      "name": "Detalle de ejecuciones",
+      "type": "n8n-nodes-base.n8n",
+      "typeVersion": 1,
+      "position": [
+        1648,
+        -128
+      ],
+      "credentials": {
+        "n8nApi": {
+          "id": "NmAC7dPq3DJK6QzC",
+          "name": "n8n account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "\n// ================== CONFIGURACIÓN ==================\n// Servicios fuera de línea A PROPÓSITO (pre-producción).\n// Cuando un servicio pase a producción, quitá su nombre de esta lista.\nconst SERVICIOS_PAUSADOS = ['JeriGo - Ingesta SharePoint'];\nconst TEXTO_PAUSADO = 'Pausado hasta el pase a producción';\nconst N8N_URL = 'https://n8nadminjs.app.n8n.cloud';\n// Registro opcional en el historial para los servicios pausados: fecha FIJA (hora de Buenos Aires).\n// Dejalo vacío ('') para no mostrar ninguna fila de \"Pausado\" en el historial.\nconst PAUSADO_DESDE = '';\n// Traducción de ID de Telegram -> nombre real (tiene prioridad sobre el nombre de Telegram)\nconst USUARIOS = {\n  // '123456789': 'Nombre Apellido',\n};\nconst SERVICIO_TELEGRAM = 'MoNX5kmPN1uaZnY9'; // Chat WhatsApp\nconst NODO_TRIGGER = 'Telegram Trigger';\nconst LOGO_URL = 'https://jerarquicos.com/wp-content/uploads/2024/01/jerarquicos-logo.svg';\nconst REFRESCO_SEG = 20;\n// Nombres a MOSTRAR en pantalla (nombre real del workflow en n8n -> nombre visible).\n// La lógica sigue usando el ID y el nombre real; esto solo cambia lo que se ve.\nconst NOMBRES_VISIBLES = {\n  'JeriGo - Chat WhatsApp': 'JeriGO - Chat WhatsApp',\n  'JeriGo - Monitoreo de errores': 'JeriGO - Monitoreo de errores',\n  'JeriGo - Ingesta SharePoint': 'JeriGO - Ingesta SharePoint'\n};\n// ===================================================\n\nconst TZ = 'America/Buenos_Aires';\nconst now = Date.now();\nconst H1 = 3600 * 1000;\nconst H24 = 24 * H1;\n\nconst WANTED = [\n  { id: 'RDvqE9FfPL7UVHLM', name: 'JeriGo - Ingesta SharePoint' },\n  { id: 'MoNX5kmPN1uaZnY9', name: 'JeriGo - Chat WhatsApp' },\n  { id: 'LbxcSlq28pX0uFpr', name: 'JeriGo - Monitoreo de errores' }\n];\nconst wantedIds = WANTED.map(w => w.id);\nconst publishedIds = $('Obtener workflows').all().map(i => i.json).filter(w => w && w.id && (w.active || w.activeVersionId)).map(w => w.id);\nfunction nombreVisible(real) {\n  const k = Object.keys(NOMBRES_VISIBLES).find(n => n.trim().toLowerCase() === String(real).trim().toLowerCase());\n  return k ? NOMBRES_VISIBLES[k] : String(real).replace(/^jerigo\\b/i, 'JeriGO');\n}\nconst workflows = WANTED.map(w => ({ id: w.id, name: w.name, label: nombreVisible(w.name), active: publishedIds.includes(w.id) }));\nconst executions = $('Obtener ejecuciones').all().map(i => i.json).filter(e => e && e.id && wantedIds.includes(String(e.workflowId)));\n\nconst pausedNames = SERVICIOS_PAUSADOS.map(n => String(n).trim().toLowerCase());\nfunction isPausedName(name) { return pausedNames.includes(String(name).trim().toLowerCase()); }\n\nfunction esc(s) {\n  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n}\n// Formato consistente dd/mm HH:mm (24 h, hora de Buenos Aires)\nconst dtf = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });\nfunction fmt(d) {\n  if (!d) return '-';\n  const p = {};\n  dtf.formatToParts(new Date(d)).forEach(x => { p[x.type] = x.value; });\n  const z = v => String(v).padStart(2, '0');\n  return z(p.day) + '/' + z(p.month) + ' ' + z(p.hour === '24' ? '00' : p.hour) + ':' + z(p.minute);\n}\nfunction ago(d) {\n  if (!d) return 'sin datos';\n  const m = Math.round((now - new Date(d).getTime()) / 60000);\n  if (m < 1) return 'recién';\n  if (m < 60) return 'hace ' + m + ' min';\n  const h = Math.round(m / 60);\n  if (h < 48) return 'hace ' + h + ' h';\n  return 'hace ' + Math.round(h / 24) + ' d';\n}\nfunction isFail(s) { return s === 'error' || s === 'crashed'; }\n// Las ejecuciones manuales son pruebas: no cuentan para la disponibilidad\nfunction isProd(e) { return e.mode !== 'manual'; }\n\nconst byWf = {};\nfor (const w of workflows) {\n  byWf[w.id] = { id: w.id, name: w.name, label: w.label, active: w.active, total24: 0, ok24: 0, okMs24: 0, okN24: 0, lastProd: null, lastOk: null };\n}\nfor (const e of executions) {\n  const s = byWf[e.workflowId];\n  if (!s || !isProd(e)) continue;\n  const t = new Date(e.startedAt || e.createdAt || 0).getTime();\n  if (e.status === 'running' || e.status === 'waiting') continue; // sin resultado final todavía\n  if (!s.lastProd || t > new Date(s.lastProd.startedAt || 0).getTime()) s.lastProd = e;\n  if (e.status === 'success' && (!s.lastOk || t > new Date(s.lastOk.startedAt || 0).getTime())) s.lastOk = e;\n  if (now - t <= H24) {\n    s.total24++;\n    if (e.status === 'success') {\n      s.ok24++;\n      const ms = new Date(e.stoppedAt || 0).getTime() - t;\n      if (t && ms >= 0) { s.okMs24 += ms; s.okN24++; }\n    }\n  }\n}\n\nconst list = workflows.map(w => byWf[w.id]).map(s => {\n  if (!s.active && isPausedName(s.name)) { s.level = 'paused'; s.status = 'PAUSADO'; s.detail = TEXTO_PAUSADO; }\n  else if (!s.active) { s.level = 'red'; s.status = 'FUERA DE LÍNEA'; s.detail = 'El workflow no está publicado'; }\n  else if (s.lastProd && isFail(s.lastProd.status)) { s.level = 'red'; s.status = 'CAÍDO'; s.detail = 'Falló su última ejecución real (' + ago(s.lastProd.startedAt) + ')'; }\n  else { s.level = 'green'; s.status = 'EN LÍNEA'; s.detail = 'Publicado y respondiendo'; }\n  return s;\n});\nconst order = { green: 0, red: 1, paused: 2 };\nlist.sort((a, b) => order[a.level] - order[b.level]);\n\nconst down = list.filter(s => s.level === 'red');\nconst paused = list.filter(s => s.level === 'paused');\nconst up = list.filter(s => s.level === 'green').length;\nconst tot24 = list.reduce((a, s) => a + s.total24, 0);\nconst ok24 = list.reduce((a, s) => a + s.ok24, 0);\n// Tasa de éxito 24 h (solo ejecuciones reales). Se muestra truncada para que coincida con los umbrales.\nconst tasa = tot24 ? ok24 * 100 / tot24 : null;\nconst tasaTxt = tasa === null ? '-' : Math.floor(tasa) + ' %';\nconst tasaCls = tasa === null ? '' : (tasa >= 95 ? ' g' : (tasa >= 80 ? ' a' : ' r'));\nfunction promedio(s) { return s.okN24 ? (s.okMs24 / s.okN24 / 1000).toFixed(1).replace('.', ',') + ' s' : '-'; }\nconst global = down.length ? 'red' : 'green';\nconst globalText = down.length\n  ? (down.length === 1 ? '1 servicio caído: ' : down.length + ' servicios caídos: ') + down.map(s => esc(s.label)).join(', ')\n  : 'Todos los servicios activos operan con normalidad';\nconst globalNote = paused.length ? (paused.length === 1 ? '1 servicio pausado' : paused.length + ' servicios pausados') : '';\n\n// Línea de tiempo de disponibilidad: caídas y recuperaciones (solo ejecuciones reales)\nfunction dur(ms) {\n  const m = Math.max(1, Math.round(ms / 60000));\n  if (m < 60) return m + ' min';\n  const h = Math.floor(m / 60);\n  if (h < 48) return h + ' h ' + (m % 60) + ' min';\n  return Math.floor(h / 24) + ' d ' + (h % 24) + ' h';\n}\n// Detalle de errores: solo nodo que falló + mensaje resumido y sin contenido de conversación.\n// Se guarda en memoria del workflow para consultar cada ejecución fallida una sola vez.\nfunction cleanErr(msg) {\n  let t = String(msg || '').split('\\n')[0];\n  t = t.replace(/\"[^\"]*\"|'[^']*'|“[^”]*”|«[^»]*»/g, '\"…\"');\n  t = t.replace(/[\\w.+-]+@[\\w-]+\\.[\\w.]+/g, '[email]');\n  t = t.replace(/\\+?\\d[\\d\\s.-]{5,}\\d/g, '[número]');\n  t = t.replace(/\\{.*\\}|\\[.*\\]/g, '{…}');\n  if (t.length > 110) t = t.slice(0, 107) + '…';\n  return t || 'Error sin detalle';\n}\nconst store = $getWorkflowStaticData('global');\nconst errCache = store.errDetails || {};\nconst userCache = store.userDetails || {};\n// Solo se toman nombre, usuario e ID del remitente; nunca el texto del mensaje\nfunction pickUser(rd) {\n  const run = rd && rd.runData ? rd.runData : {};\n  const keys = run[NODO_TRIGGER] ? [NODO_TRIGGER] : Object.keys(run);\n  for (const k of keys) {\n    try {\n      const j = run[k][0].data.main[0][0].json;\n      const f = (j.message && j.message.from) || (j.callback_query && j.callback_query.from) || (j.edited_message && j.edited_message.from);\n      if (f && f.id) return { id: String(f.id), first: String(f.first_name || '').slice(0, 40), last: String(f.last_name || '').slice(0, 40), username: String(f.username || '').slice(0, 40) };\n    } catch (e) { /* sin datos de este nodo */ }\n  }\n  return null;\n}\nlet detalles = [];\ntry { detalles = $('Detalle de ejecuciones').all().map(i => i.json); } catch (e) { detalles = []; }\nfor (const d of detalles) {\n  if (!d || !d.id || !d.data) continue;\n  if (String(d.workflowId) === SERVICIO_TELEGRAM) userCache[String(d.id)] = pickUser(d.data.resultData) || { none: true };\n  if (d.status !== 'error' && d.status !== 'crashed') continue;\n  const rd = (d.data && d.data.resultData) || {};\n  const er = rd.error || {};\n  let nodeName = (er.node && er.node.name) || rd.lastNodeExecuted || '';\n  let msg = er.message || er.description || '';\n  if (!msg && rd.runData) {\n    for (const k of Object.keys(rd.runData)) {\n      const runs = rd.runData[k] || [];\n      const bad = runs.find(r => r && r.error);\n      if (bad) { nodeName = nodeName || k; msg = bad.error.message || ''; break; }\n    }\n  }\n  errCache[String(d.id)] = { node: String(nodeName || '').slice(0, 60), msg: cleanErr(msg) };\n}\nconst liveIds = new Set(executions.map(e => String(e.id)));\nfor (const k of Object.keys(errCache)) if (!liveIds.has(k)) delete errCache[k];\nfor (const k of Object.keys(userCache)) if (!liveIds.has(k)) delete userCache[k];\nstore.errDetails = errCache;\nstore.userDetails = userCache;\nfunction userText(id) {\n  const u = userCache[String(id)];\n  if (!u || u.none || !u.id) return '';\n  const name = USUARIOS[u.id] || [u.first, u.last].filter(Boolean).join(' ');\n  if (name) return name + (u.username ? ' (@' + u.username + ')' : '') + ' · ID ' + u.id;\n  return u.username ? '@' + u.username : 'ID ' + u.id;\n}\nfunction userSearch(id) {\n  const u = userCache[String(id)];\n  if (!u || u.none || !u.id) return '';\n  return [USUARIOS[u.id] || '', u.first, u.last, u.username, '@' + u.username, u.id].join(' ').toLowerCase();\n}\n\nfunction durExec(e) {\n  const a = new Date(e.startedAt).getTime(), b = new Date(e.stoppedAt || 0).getTime();\n  if (!a || !b || b < a) return '-';\n  const ms = b - a;\n  if (ms < 60000) return (ms / 1000).toFixed(1).replace('.', ',') + ' s';\n  return Math.floor(ms / 60000) + ' min ' + Math.round((ms % 60000) / 1000) + ' s';\n}\nconst STATUS_TXT = { success: 'Exitosa', error: 'Error', crashed: 'Falla grave' };\n\nconst events = [];\nfor (const w of workflows) {\n  const runs = executions\n    .filter(e => String(e.workflowId) === w.id && isProd(e) && (e.status === 'success' || isFail(e.status)))\n    .sort((a, b) => new Date(a.startedAt) - new Date(b.startedAt));\n  let downSince = null;\n  for (const e of runs) {\n    // Ejecuciones reales (solo metadatos)\n    if (e.status === 'success') {\n      const ut = userText(e.id);\n      events.push({ t: e.startedAt, wf: w.id, name: w.label, cat: 'exec', type: 'ok', text: 'Ejecución OK', detail: ut || ('Origen: ' + (e.mode || '-')), user: userSearch(e.id), dur: durExec(e), id: e.id, st: STATUS_TXT.success, err: 0 });\n    } else {\n      const d = errCache[String(e.id)];\n      const errTxt = d ? ((d.node ? 'Nodo «' + d.node + '»: ' : '') + d.msg) : 'Detalle del error no disponible';\n      const ut = userText(e.id);\n      const det = ut ? ut + ' · ' + errTxt : errTxt;\n      events.push({ t: e.startedAt, wf: w.id, name: w.label, cat: 'exec', type: 'err', text: 'Ejecución con error', detail: det, user: userSearch(e.id), dur: durExec(e), id: e.id, st: STATUS_TXT[e.status] || 'Error', err: 1 });\n    }\n    // Disponibilidad\n    if (isFail(e.status) && !downSince) {\n      downSince = e;\n      events.push({ t: e.startedAt, wf: w.id, name: w.label, cat: 'avail', type: 'down', text: 'Se cayó', detail: 'Falló una ejecución real (' + (e.mode || '') + ')', dur: '-', id: e.id, st: 'Caído', err: 1, seq: 1 });\n    } else if (e.status === 'success' && downSince) {\n      events.push({ t: e.startedAt, wf: w.id, name: w.label, cat: 'avail', type: 'up', text: 'Se recuperó', detail: 'Estuvo caído ' + dur(new Date(e.startedAt) - new Date(downSince.startedAt)), dur: '-', id: e.id, st: 'En línea', err: 0, seq: 1 });\n      downSince = null;\n    }\n  }\n  // Si sigue caído, se marca sobre el evento original (con su fecha real), sin crear filas con la hora actual\n  if (downSince) {\n    const ev = events.find(x => x.cat === 'avail' && x.type === 'down' && x.id === downSince.id);\n    if (ev) { ev.text = 'Se cayó · sigue caído'; ev.detail = 'Caído desde hace ' + dur(now - new Date(downSince.startedAt)); }\n  }\n}\n// Pausados: sin fila en el historial, salvo que PAUSADO_DESDE tenga una fecha fija\nconst pausadoT = PAUSADO_DESDE ? new Date(PAUSADO_DESDE + (/[zZ]|[+-]\\d\\d:?\\d\\d$/.test(PAUSADO_DESDE) ? '' : '-03:00')) : null;\nif (pausadoT && !isNaN(pausadoT.getTime())) {\n  for (const s of list) {\n    if (s.level === 'paused') events.push({ t: pausadoT.toISOString(), wf: s.id, name: s.label, cat: 'avail', type: 'paused', text: 'Pausado', detail: TEXTO_PAUSADO, dur: '-', id: '', st: 'Pausado', err: 0 });\n  }\n}\n// Orden único por fecha real (más reciente primero); desempate estable por ID de ejecución\nevents.sort((a, b) => (new Date(b.t) - new Date(a.t)) || ((Number(b.id) || 0) - (Number(a.id) || 0)) || ((b.seq || 0) - (a.seq || 0)));\nlet rows = '';\nfor (const ev of events.slice(0, 500)) {\n  const idCell = ev.id\n    ? '<a class=\"exlink\" href=\"' + N8N_URL + '/workflow/' + esc(ev.wf) + '/executions/' + esc(ev.id) + '\" target=\"_blank\" rel=\"noopener\" title=\"Abrir la ejecución en n8n\">#' + esc(ev.id) + '</a>'\n    : '-';\n  rows += '<tr class=\"ev ' + ev.type + '\" data-cat=\"' + ev.cat + '\" data-err=\"' + ev.err + '\" data-svc=\"' + esc(ev.wf) + '\" data-user=\"' + esc(ev.user || '') + '\">' +\n    '<td class=\"mono\">' + fmt(ev.t) + '</td>' +\n    '<td class=\"svc\">' + esc(ev.name) + '</td>' +\n    '<td><span class=\"tag\">' + esc(ev.text) + '</span></td>' +\n    '<td class=\"muted dt\" title=\"' + esc(ev.detail) + '\">' + esc(ev.detail) + '</td>' +\n    '<td class=\"mono\">' + esc(ev.dur) + '</td>' +\n    '<td class=\"mono muted\">' + idCell + '</td>' +\n    '<td class=\"mono\">' + esc(ev.st) + '</td></tr>';\n}\nrows += '<tr class=\"empty\" style=\"display:none\"><td colspan=\"7\" class=\"muted\">Sin eventos para este filtro</td></tr>';\nconst svcOpts = '<option value=\"all\">Todos los servicios</option>' + workflows.map(w => '<option value=\"' + esc(w.id) + '\">' + esc(w.label) + '</option>').join('');\nconst filtros = '<div class=\"filters\">' +\n  '<div class=\"seg\">' +\n    '<button type=\"button\" data-f=\"all\">Todos</button>' +\n    '<button type=\"button\" data-f=\"exec\">Ejecuciones</button>' +\n    '<button type=\"button\" data-f=\"err\">Errores</button>' +\n    '<button type=\"button\" data-f=\"avail\">Disponibilidad</button>' +\n  '</div>' +\n  '<select id=\"svcSel\" aria-label=\"Filtrar por servicio\">' + svcOpts + '</select>' +\n  '<input type=\"search\" id=\"userQ\" placeholder=\"Buscar usuario (nombre o ID)\" aria-label=\"Buscar por usuario\" autocomplete=\"off\">' +\n  '<span class=\"cnt muted\" id=\"cnt\"></span>' +\n'</div>';\n\nlet cards = '';\nfor (const s of list) {\n  cards += '<article class=\"card st-' + s.level + '\">' +\n    '<header class=\"card-h\"><span class=\"dot\"></span><h3 class=\"name\">' + esc(s.label) + '</h3></header>' +\n    '<div class=\"status\">' + s.status + '</div>' +\n    '<p class=\"detail\">' + esc(s.detail) + '</p>' +\n    '<div class=\"stats\">' +\n      '<div class=\"stat\"><span class=\"num\">' + s.total24 + '</span><span class=\"lbl\">Ejecuciones 24 h</span></div>' +\n      '<div class=\"stat\"><span class=\"num\">' + promedio(s) + '</span><span class=\"lbl\">Tiempo promedio</span></div>' +\n      '<div class=\"stat\"><span class=\"num\">' + (s.lastOk ? ago(s.lastOk.startedAt) : '-') + '</span><span class=\"lbl\">Última OK</span></div>' +\n    '</div>' +\n  '</article>';\n}\n\nconst css = [\n  // ===== PALETA INSTITUCIONAL (ajustá los colores acá) =====\n  ':root{' +\n    '--azul-oscuro:#00549A;--azul:#0081C9;--azul-hdr-fin:#0078C0;--azul-link:#1A7BC0;' +\n    '--bg:#F4F6F8;--card:#FFFFFF;--line:#DDE3EA;--hover:#EEF3F8;--scroll:#B9C6D3;' +\n    '--txt:#1F2D3D;--mut:#5F6E80;' +\n    '--sombra:0 2px 8px rgba(31,45,61,.08);' +\n    // Estados: color base (barras, puntos, bordes) / texto con contraste >= 4.5:1 / fondo de etiqueta\n    '--ok:#1E9E5A;--ok-txt:#167A45;--ok-bg:#E3F5EB;--ok-bd:#A8DDBF;' +\n    '--warn:#E0A100;--warn-txt:#8A6400;--warn-bg:#FFF4D6;--warn-bd:#F0D58A;--warn-card:#FFFBEF;' +\n    '--err:#D64545;--err-txt:#B83232;--err-bg:#FDE8E8;--err-bd:#F2B8B8;' +\n    '--pad:clamp(14px,2vw,32px)}',\n  '*{box-sizing:border-box}',\n  'body{margin:0;background:var(--bg);color:var(--txt);font-family:\"Segoe UI\",Roboto,Helvetica,Arial,sans-serif;padding:var(--pad);-webkit-font-smoothing:antialiased}',\n  '.hdr{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin:calc(-1 * var(--pad)) calc(-1 * var(--pad)) 22px;padding:18px var(--pad);background:linear-gradient(90deg,var(--azul-oscuro),var(--azul-hdr-fin));border-bottom:3px solid var(--azul);color:#fff;box-shadow:0 2px 10px rgba(0,84,154,.25)}',\n  '.brand{display:flex;align-items:center;gap:18px;min-width:0}',\n  '.logo{display:flex;align-items:center;padding-right:18px;border-right:1px solid rgba(255,255,255,.35)}',\n  '.logo img{height:40px;width:auto;max-width:200px;object-fit:contain;display:block;filter:brightness(0) invert(1)}',\n  '.logo .fb{display:none;color:#fff;font-weight:700;font-size:16px;line-height:40px;white-space:nowrap}',\n  '.logo.nologo img{display:none}.logo.nologo .fb{display:block}',\n  'h1{margin:0;font-size:clamp(26px,2.6vw,40px);font-weight:800;letter-spacing:.3px;line-height:1.1;color:#fff}',\n  '.subt{color:#fff;opacity:.95;font-size:clamp(14px,1.2vw,18px);margin-top:4px}',\n  '.meta{text-align:right;color:#fff}',\n  '.clock{font-size:clamp(26px,2.6vw,40px);font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1;color:#fff}',\n  '.upd{color:#fff;font-size:14px;margin-top:4px}',\n  '.rs{display:inline-flex;align-items:center;gap:6px;font-size:13px;margin-top:4px;color:#fff}',\n  '.rs::before{content:\"\";width:8px;height:8px;border-radius:50%;background:#7CE0A6;box-shadow:0 0 0 2px rgba(255,255,255,.35)}',\n  '.rs.err{color:#fff;font-weight:700}.rs.err::before{background:#FF8A8A}',\n  '.banner{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 24px;border-radius:14px;font-size:clamp(20px,2vw,30px);font-weight:700;margin-bottom:20px;box-shadow:var(--sombra)}',\n  '.banner.green{background:var(--ok-bg);border:1px solid var(--ok-bd);border-left:6px solid var(--ok);color:#0F5E34}',\n  '.banner.red{background:var(--err-bg);border:1px solid var(--err-bd);border-left:6px solid var(--err);color:#8E2323;animation:blink 2s infinite}',\n  '.banner .note{font-size:15px;font-weight:700;background:var(--warn-bg);border:1px solid var(--warn-bd);padding:6px 12px;border-radius:999px;color:var(--warn-txt)}',\n  '@keyframes blink{50%{opacity:.85}}',\n  '.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}',\n  '.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 12px;text-align:center;box-shadow:var(--sombra)}',\n  '.kpi .num{display:block;font-size:clamp(34px,3.4vw,52px);font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;color:var(--azul-oscuro)}',\n  '.kpi .lbl{color:var(--mut);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.8px}',\n  '.kpi.g .num{color:var(--ok-txt)}.kpi.r .num{color:var(--err-txt)}.kpi.a .num{color:var(--warn-txt)}',\n  '.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr));gap:18px}',\n  '.card{position:relative;background:var(--card);border:1px solid var(--line);border-left:5px solid var(--line);border-radius:14px;padding:22px 22px 18px;box-shadow:var(--sombra)}',\n  '.st-green{border-left-color:var(--ok)}',\n  '.st-red{border-left-color:var(--err)}',\n  '.st-paused{border-left-color:var(--warn);background:var(--warn-card)}',\n  '.card-h{display:flex;align-items:center;gap:12px}',\n  '.name{margin:0;font-size:clamp(18px,1.6vw,24px);font-weight:700;line-height:1.25;color:var(--azul-oscuro)}',\n  '.dot{position:relative;width:16px;height:16px;border-radius:50%;flex:none}',\n  '.st-green .dot{background:var(--ok);box-shadow:0 0 0 3px var(--ok-bg)}',\n  '.st-green .dot::after{content:\"\";position:absolute;inset:0;border-radius:50%;border:2px solid var(--ok);animation:pulse 2s ease-out infinite}',\n  '@keyframes pulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.6);opacity:0}}',\n  '.st-red .dot{background:var(--err);box-shadow:0 0 0 3px var(--err-bg)}',\n  '.st-paused .dot{background:var(--warn);box-shadow:0 0 0 3px var(--warn-bg)}',\n  '.status{font-size:clamp(28px,2.6vw,38px);font-weight:800;margin:14px 0 4px;letter-spacing:.5px}',\n  '.st-green .status{color:var(--ok-txt)}.st-red .status{color:var(--err-txt)}.st-paused .status{color:var(--warn-txt)}',\n  '.detail{color:var(--mut);margin:0 0 16px;font-size:15px;min-height:20px}',\n  '.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:14px}',\n  '.stat{display:flex;flex-direction:column;align-items:center;text-align:center}',\n  '.stat .num{font-size:clamp(20px,1.8vw,26px);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--txt)}',\n  '.stat .lbl{font-size:12px;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.6px;margin-top:2px}',\n  'h2{margin:30px 0 12px;font-size:clamp(18px,1.6vw,24px);font-weight:700;color:var(--azul-oscuro)}',\n  '.table-wrap{max-height:430px;overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card);box-shadow:var(--sombra);scrollbar-width:thin;scrollbar-color:var(--scroll) transparent}',\n  '.table-wrap::-webkit-scrollbar{width:10px;height:10px}.table-wrap::-webkit-scrollbar-track{background:transparent}',\n  '.table-wrap::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:10px;border:2px solid var(--card)}.table-wrap::-webkit-scrollbar-thumb:hover{background:#97A8BA}',\n  'table{width:100%;border-collapse:collapse;min-width:900px}',\n  'th{position:sticky;top:0;z-index:1;background:var(--azul-oscuro);text-align:left;padding:12px 16px;color:#fff;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--azul-oscuro)}',\n  'td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:16px;color:var(--txt)}',\n  'tr:last-child td{border-bottom:none}',\n  'tbody tr{background:var(--card);transition:background .15s}tbody tr:hover{background:var(--hover)}',\n  '.mono{font-variant-numeric:tabular-nums;white-space:nowrap}.muted{color:var(--mut)}.svc{font-weight:600}',\n  '.tag{display:inline-block;padding:3px 12px;border-radius:999px;font-weight:700;font-size:13px;white-space:nowrap;border:1px solid transparent}',\n  '.ev.up .tag,.ev.ok .tag{background:var(--ok-bg);color:var(--ok-txt);border-color:var(--ok-bd)}',\n  '.ev.down .tag,.ev.err .tag{background:var(--err-bg);color:var(--err-txt);border-color:var(--err-bd)}',\n  '.ev.paused .tag{background:var(--warn-bg);color:var(--warn-txt);border-color:var(--warn-bd)}',\n  '.dt{max-width:460px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',\n  '.exlink{color:var(--azul-link);font-weight:600;text-decoration:none}.exlink:hover{text-decoration:underline}tbody tr:hover .exlink{color:var(--azul-oscuro)}',\n  '.filters{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px}',\n  '.seg{display:inline-flex;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}',\n  '.seg button{background:transparent;color:var(--mut);border:0;padding:8px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}',\n  '.seg button:hover{background:var(--hover);color:var(--txt)}',\n  '.seg button+button{border-left:1px solid var(--line)}.seg button.on,.seg button.on:hover{background:var(--azul-link);color:#fff}',\n  '#svcSel{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit;font-size:14px}',\n  '.cnt{font-size:13px}',\n  '#userQ{background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font:inherit;font-size:14px;min-width:240px}#userQ::placeholder{color:var(--mut)}',\n  '#svcSel:focus,#userQ:focus,.seg button:focus-visible,#more:focus-visible{outline:none;border-color:var(--azul-link);box-shadow:0 0 0 3px rgba(26,123,192,.2)}',\n  '.more-wrap{text-align:center;margin-top:12px}',\n  '#more{background:var(--card);color:var(--azul-link);border:1px solid var(--line);border-radius:10px;padding:8px 22px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}#more:hover{background:var(--hover);border-color:var(--azul-link)}',\n  '.foot{color:var(--mut);font-size:12px;margin-top:14px;text-align:right}',\n  '@media (max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}',\n  '@media (max-width:640px){.kpis{grid-template-columns:repeat(2,1fr)}.meta{text-align:left}.hdr{align-items:flex-start}.logo img{height:36px}.banner{padding:14px 16px}td{font-size:14px}}'\n].join('');\n\nconst app = '<div id=\"app\" data-gen=\"' + now + '\">' +\n  '<header class=\"hdr\">' +\n    '<div class=\"brand\">' +\n      '<div class=\"logo\"><img src=\"' + LOGO_URL + '\" alt=\"Jerárquicos Salud\" onerror=\"this.parentNode.classList.add(&quot;nologo&quot;)\"><span class=\"fb\">Jerárquicos Salud</span></div>' +\n      '<div><h1>JeriGO</h1><div class=\"subt\">Estado de los servicios</div></div>' +\n    '</div>' +\n    '<div class=\"meta\"><div class=\"clock\" id=\"clk\"></div>' +\n      '<div class=\"upd\">Actualizado ' + fmt(now) + ' · <span id=\"since\">recién</span></div>' +\n      '<div class=\"rs\" id=\"rs\">Conectado · refresco cada ' + REFRESCO_SEG + ' s</div></div>' +\n  '</header>' +\n  '<div class=\"banner ' + global + '\"><span>' + globalText + '</span>' + (globalNote ? '<span class=\"note\">' + globalNote + '</span>' : '') + '</div>' +\n  '<section class=\"kpis\">' +\n    '<div class=\"kpi g\"><span class=\"num\">' + up + '</span><span class=\"lbl\">En línea</span></div>' +\n    '<div class=\"kpi r\"><span class=\"num\">' + down.length + '</span><span class=\"lbl\">Caídos</span></div>' +\n    '<div class=\"kpi a\"><span class=\"num\">' + paused.length + '</span><span class=\"lbl\">Pausados</span></div>' +\n    '<div class=\"kpi\"><span class=\"num\">' + tot24 + '</span><span class=\"lbl\">Ejecuciones reales 24 h</span></div>' +\n    '<div class=\"kpi' + tasaCls + '\"><span class=\"num\">' + tasaTxt + '</span><span class=\"lbl\">Tasa de éxito 24 h</span></div>' +\n  '</section>' +\n  '<section class=\"grid\">' + cards + '</section>' +\n  '<h2>Historial de ejecuciones y disponibilidad</h2>' + filtros +\n  '<div class=\"table-wrap\"><table id=\"hist\"><thead><tr><th>Fecha y hora</th><th>Servicio</th><th>Evento</th><th>Detalle</th><th>Duración</th><th>Ejecución</th><th>Estado</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +\n  '<div class=\"more-wrap\"><button type=\"button\" id=\"more\">Ver más</button></div>' +\n  '<div class=\"foot\">No incluye pruebas manuales · horario de Buenos Aires</div>' +\n'</div>';\n\n// Refresco por JS: misma URL (mismo origen, el navegador reenvía el login), timeout de 15 s,\n// reintento silencioso ante un fallo aislado y aviso recién al segundo fallo seguido.\nconst script = '<script>(function(){' +\n  'var TZ=\"' + TZ + '\",INT=' + (REFRESCO_SEG * 1000) + ',TO=15000,lastOk=Date.now(),fails=0,busy=false,timer=null;' +\n  'var F={cat:\"all\",svc:\"all\",q:\"\",shown:50};' +\n  'function rel(ms){var s=Math.max(0,Math.floor(ms/1000));if(s<60)return \"hace \"+s+\" s\";var m=Math.floor(s/60);if(m<60)return \"hace \"+m+\" min\";return \"hace \"+Math.floor(m/60)+\" h \"+(m%60)+\" min\";}' +\n  'function tick(){var c=document.getElementById(\"clk\");if(c)c.textContent=new Date().toLocaleTimeString(\"es-AR\",{timeZone:TZ,hourCycle:\"h23\"});' +\n    'var s=document.getElementById(\"since\");if(s)s.textContent=\"última actualización exitosa \"+rel(Date.now()-lastOk);' +\n    'var r=document.getElementById(\"rs\");if(r){var bad=fails>=2;r.className=bad?\"rs err\":\"rs\";r.textContent=bad?\"Sin conexión con el servidor · reintentando\":\"Conectado · refresco cada \"+(INT/1000)+\" s\";}}' +\n  'function apply(){var rows=document.querySelectorAll(\"#hist tbody tr[data-cat]\"),tot=0,vis=0;' +\n    'for(var i=0;i<rows.length;i++){var r=rows[i],c=r.getAttribute(\"data-cat\");' +\n      'var ok=(F.cat===\"all\"||(F.cat===\"err\"?r.getAttribute(\"data-err\")===\"1\":c===F.cat))&&(F.svc===\"all\"||r.getAttribute(\"data-svc\")===F.svc)&&(!F.q||(r.getAttribute(\"data-user\")||\"\").indexOf(F.q)>=0);' +\n      'if(ok){tot++;if(tot<=F.shown){vis++;r.style.display=\"\";}else r.style.display=\"none\";}else r.style.display=\"none\";}' +\n    'var e=document.querySelector(\"#hist tr.empty\");if(e)e.style.display=tot?\"none\":\"\";' +\n    'var m=document.getElementById(\"more\");if(m)m.style.display=tot>F.shown?\"\":\"none\";' +\n    'var n=document.getElementById(\"cnt\");if(n)n.textContent=tot?(\"Mostrando \"+vis+\" de \"+tot):\"\";' +\n    'var bs=document.querySelectorAll(\"[data-f]\");for(var j=0;j<bs.length;j++)bs[j].className=bs[j].getAttribute(\"data-f\")===F.cat?\"on\":\"\";' +\n    'var sel=document.getElementById(\"svcSel\");if(sel)sel.value=F.svc;var q=document.getElementById(\"userQ\");if(q&&q.value.trim().toLowerCase()!==F.q)q.value=F.q;}' +\n  'document.addEventListener(\"click\",function(ev){var t=ev.target;var b=t.closest&&t.closest(\"[data-f]\");if(b){F.cat=b.getAttribute(\"data-f\");F.shown=50;apply();return;}if(t.id===\"more\"){F.shown+=50;apply();}});' +\n  'document.addEventListener(\"change\",function(ev){if(ev.target.id===\"svcSel\"){F.svc=ev.target.value;F.shown=50;apply();}});' +\n  'document.addEventListener(\"input\",function(ev){if(ev.target.id===\"userQ\"){F.q=ev.target.value.trim().toLowerCase();F.shown=50;apply();}});' +\n  'function later(ms){clearTimeout(timer);timer=setTimeout(refresh,ms);}' +\n  'function refresh(){if(busy)return;busy=true;var ctl=new AbortController(),to=setTimeout(function(){ctl.abort();},TO);' +\n    'fetch(location.pathname+\"?_r=\"+Date.now(),{cache:\"no-store\",credentials:\"same-origin\",signal:ctl.signal})' +\n    '.then(function(res){if(res.status===401||res.status===403){location.reload();throw new Error(\"auth\");}if(!res.ok)throw new Error(\"http\");return res.text();})' +\n    '.then(function(t){var d=new DOMParser().parseFromString(t,\"text/html\");var n=d.getElementById(\"app\");if(!n)throw new Error(\"bad\");' +\n      'var cur=document.getElementById(\"app\");var w0=cur.querySelector(\".table-wrap\"),st=w0?w0.scrollTop:0,sh=w0?w0.scrollHeight:0,wy=window.scrollY;' +\n      'var qa=document.activeElement&&document.activeElement.id===\"userQ\",qv=qa?document.activeElement.value:null,qs=qa?document.activeElement.selectionStart:0;' +\n      'cur.innerHTML=n.innerHTML;cur.setAttribute(\"data-gen\",n.getAttribute(\"data-gen\")||\"\");lastOk=Date.now();fails=0;apply();' +\n      'var w1=cur.querySelector(\".table-wrap\");if(w1&&st>0)w1.scrollTop=st+(w1.scrollHeight-sh);window.scrollTo(0,wy);' +\n      'if(qa){var q2=document.getElementById(\"userQ\");if(q2){q2.value=qv;q2.focus();try{q2.setSelectionRange(qs,qs);}catch(x){}}}tick();later(INT);})' +\n    '.catch(function(){fails++;tick();later(fails===1?4000:INT);})' +\n    '.then(function(){clearTimeout(to);busy=false;});}' +\n  'apply();tick();setInterval(tick,1000);later(INT);' +\n'})();</script>';\n\nconst html = '<!DOCTYPE html><html lang=\"es\"><head><meta charset=\"utf-8\">' +\n  '<noscript><meta http-equiv=\"refresh\" content=\"' + REFRESCO_SEG + '\"></noscript>' +\n  '<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>JeriGO - Estado de los servicios</title><style>' + css + '</style></head><body>' +\n  app + script + '</body></html>';\n\nreturn [{ json: { html } }];\n"
+      },
+      "id": "5b2101fd-21c1-4a32-bb76-060d51edda6d",
+      "name": "Armar página",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1280,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "id": "acd09766-57df-449e-bafa-4869717219d9",
+      "name": "Mostrar página",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1504,
+        272
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Abrir dashboard": {
+      "main": [
+        [
+          {
+            "node": "Obtener workflows",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener workflows": {
+      "main": [
+        [
+          {
+            "node": "Workflows a mostrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflows a mostrar": {
+      "main": [
+        [
+          {
+            "node": "Obtener ejecuciones",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener ejecuciones": {
+      "main": [
+        [
+          {
+            "node": "Ejecuciones a detallar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecuciones a detallar": {
+      "main": [
+        [
+          {
+            "node": "¿Hay ejecuciones nuevas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay ejecuciones nuevas?": {
+      "main": [
+        [
+          {
+            "node": "Detalle de ejecuciones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detalle de ejecuciones": {
+      "main": [
+        [
+          {
+            "node": "Armar página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar página": {
+      "main": [
+        [
+          {
+            "node": "Mostrar página",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fc9fa81e-f3fc-4ab8-8cfe-feac1f672225",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a926c9710c129004cb72e65197c5848751ff5571ec080fb3b3a92c7995412a33"
+  },
+  "nodeGroups": [
+    {
+      "id": "6fdb45f6-7b27-4265-8cd6-8c5b05cdb08b",
+      "name": "Recopilar estado",
+      "nodeIds": [
+        "ae974120-832b-4c2e-aabd-35a5a9c0cacb",
+        "821e146e-9dca-4cf4-b772-f11193cece8f",
+        "0ca8b35a-1d88-415c-9246-1e24c0930d59",
+        "0bc7d6b7-0791-45e1-b9d1-fef67ae363e3"
+      ],
+      "description": "Lee servicios publicados y últimas ejecuciones, y elige las que faltan detallar (errores y usuario de Telegram)"
+    },
+    {
+      "id": "1e3dfc47-d7de-4011-9cb4-a30908d711eb",
+      "name": "Generar dashboard",
+      "nodeIds": [
+        "5b2101fd-21c1-4a32-bb76-060d51edda6d",
+        "acd09766-57df-449e-bafa-4869717219d9"
+      ],
+      "description": "Calcula estados, historial y filtros, y devuelve la página HTML protegida al navegador"
+    }
+  ],
+  "id": "WBRXfxO6PmMaJFSL",
+  "tags": []
+}

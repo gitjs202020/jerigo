@@ -1,0 +1,453 @@
+{
+  "name": "JeriGo Test - Procesador FAQ",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst text = input.texto || '';\n\nconst faqs = text.split(/(?=Pregunta:)/g);\n\nconst output = [];\n\nfor (const faq of faqs) {\n    const cleaned = faq.trim();\n\n    if (!cleaned.startsWith('Pregunta:')) continue;\n\n    const preguntaMatch = cleaned.match(/Pregunta:\\s*(.*?)(?:\\r?\\n|Respuesta:)/s);\n\n    output.push({\n        json: {\n            file_name: input.file_name || '',\n            chunk: cleaned,\n            pregunta: preguntaMatch ? preguntaMatch[1].trim() : ''\n        }\n    });\n}\n\nreturn output;"
+      },
+      "id": "318f2874-ae6f-46ed-a7e9-67cbe3e267a1",
+      "name": "Dividir FAQ por pregunta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        260,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analiza el siguiente FAQ para indexarlo en un sistema RAG.\n\nDocumento:\n{{ $('Dividir FAQ por pregunta').item.json.file_name }}\n\nContenido:\n{{ $json.chunk }}\n\nIMPORTANTE:\n\n- Analiza únicamente el texto recibido.\n- No inventes información.\n- Si un dato no existe devolver \"\".\n- Devuelve un único JSON válido.\n- No agregues explicaciones.\n\nExtrae:\n\n1. Pregunta principal.\n2. Categoría.\n3. Subcategoría.\n4. Resumen breve.\n5. Acción requerida por el socio.\n6. Documentación requerida.\n7. Requiere autorización.\n8. Canal de gestión.\n9. Planes involucrados.\n10. Temas relevantes.\n\nFormato:\n\n{\n  \"pregunta\": \"\",\n  \"categoria\": \"\",\n  \"subcategoria\": \"\",\n  \"resumen\": \"\",\n  \"accion_requerida\": \"\",\n  \"documentacion\": [],\n  \"requiere_autorizacion\": false,\n  \"canales\": [],\n  \"planes\": [],\n  \"temas\": []\n}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Eres un especialista en clasificación documental para sistemas RAG de salud.\n\nAnaliza únicamente el FAQ recibido.\n\nExtrae exclusivamente información presente en el texto.\n\nNo inventes datos.\n\nSi un dato no existe devuelve cadena vacía o arreglo vacío.\n\nDevuelve exactamente un único JSON válido.\n\nNunca devuelvas explicaciones.\nNunca devuelvas markdown.\nNunca devuelvas múltiples objetos JSON.\n`"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "276a2d79-4271-436a-a172-2c49426bc2b8",
+      "name": "Extraer metadatos FAQ",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        520,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "model": "gpt-oss:120b",
+        "options": {
+          "temperature": 0,
+          "topK": 1,
+          "topP": 0.1
+        }
+      },
+      "id": "87427e67-1dcb-4659-a39a-819bdfffea8d",
+      "name": "Ollama Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        520,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"pregunta\": \"string\",\n  \"categoria\": \"string\",\n  \"subcategoria\": \"string\",\n  \"resumen\": \"string\",\n  \"accion_requerida\": \"string\",\n  \"documentacion\": [\n    \"string\"\n  ],\n  \"requiere_autorizacion\": \"boolean\",\n  \"canales\": [\n    \"string\"\n  ],\n  \"planes\": [\n    \"string\"\n  ],\n  \"temas\": [\n    \"string\"\n  ]\n}",
+        "autoFix": true
+      },
+      "id": "a73ed292-24d2-41cf-9820-bcdebf745703",
+      "name": "Structured Output Parser2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "be47f51c-e1c1-419b-83df-5cc9688b37ee",
+              "name": "pageContent",
+              "value": "={{ $('Dividir FAQ por pregunta').item.json.chunk }}",
+              "type": "string"
+            },
+            {
+              "id": "b701b99f-b2a3-42ed-84a3-9eb0b00f58fd",
+              "name": "pregunta",
+              "value": "={{ $json.output.pregunta }}",
+              "type": "string"
+            },
+            {
+              "id": "bb768b5e-e22b-4c6b-9d71-a7e077d0fad9",
+              "name": "categoria",
+              "value": "={{ $json.output.categoria }}",
+              "type": "string"
+            },
+            {
+              "id": "4ffb5b69-ca8e-459c-b36e-a7208439d73a",
+              "name": "subcategoria",
+              "value": "={{ $json.output.subcategoria }}",
+              "type": "string"
+            },
+            {
+              "id": "98c7b17d-634e-4a02-9a5b-4f03f452af73",
+              "name": "resumen",
+              "value": "={{ $json.output.resumen }}",
+              "type": "string"
+            },
+            {
+              "id": "53b6a0b2-aa37-48ae-85ea-6d7b0777b9f8",
+              "name": "accion_requerida",
+              "value": "={{ $json.output.accion_requerida }}",
+              "type": "string"
+            },
+            {
+              "id": "62b32c62-9c15-448b-908d-388172411851",
+              "name": "documentacion",
+              "value": "={{ $json.output.documentacion || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "4a3a7280-30a4-4bde-a410-f11499d9a2b0",
+              "name": "canales",
+              "value": "={{ $json.output.canales || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "62d3e3f6-fe3b-4972-bf0a-8a1facb9770e",
+              "name": "planes",
+              "value": "={{ $json.output.planes || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "693f10bc-62e6-477a-a7e9-c303459c8b94",
+              "name": "temas",
+              "value": "={{ $json.output.temas || [] }}",
+              "type": "array"
+            },
+            {
+              "id": "127e4b25-1126-41c7-8f33-00d6545cdc4d",
+              "name": "requiere_autorizacion",
+              "value": "={{ String($json.output.requiere_autorizacion) === 'true' }}",
+              "type": "string"
+            },
+            {
+              "id": "8ba518ed-f240-42ba-b304-df040ee03b67",
+              "name": "fuente",
+              "value": "={{ $('Dividir FAQ por pregunta').item.json.file_name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        800,
+        0
+      ],
+      "id": "c9584a1f-5c79-4837-87c8-a9a37884e0b7",
+      "name": "Preparar documento FAQ"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "document_embeddings_test",
+          "mode": "list",
+          "cachedResultName": "document_embeddings_test"
+        },
+        "options": {
+          "queryName": "match_documents_test"
+        }
+      },
+      "id": "6ab8eb9d-89e3-42ae-880c-8bd5ba6ce2bc",
+      "name": "Supabase Vector Store",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "e173ced8-e54e-4446-aef5-68a54a9810a6",
+      "name": "Embeddings OpenAI",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        560
+      ]
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.pageContent }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "pageContent",
+                "value": "={{ $json.pageContent }}"
+              },
+              {
+                "name": "plan",
+                "value": "={{ $json.plan }}"
+              },
+              {
+                "name": "categoria",
+                "value": "={{ $json.categoria }}"
+              },
+              {
+                "name": "prestacion",
+                "value": "={{ $json.prestacion }}"
+              },
+              {
+                "name": "tipo_documento",
+                "value": "={{ $json.tipo_documento }}"
+              },
+              {
+                "name": "cobertura",
+                "value": "={{ $json.cobertura }}"
+              },
+              {
+                "name": "coseguro",
+                "value": "={{ $json.coseguro }}"
+              },
+              {
+                "name": "carencia",
+                "value": "={{ $json.carencia }}"
+              },
+              {
+                "name": "requiere_autorizacion",
+                "value": "={{ String($json.requiere_autorizacion ?? \"\") }}"
+              },
+              {
+                "name": "temas",
+                "value": "={{ JSON.stringify($json.temas ?? []) }}"
+              },
+              {
+                "name": "pregunta",
+                "value": "={{ $json.pregunta }}"
+              },
+              {
+                "name": "subcategoria",
+                "value": "={{ $json.subcategoria }}"
+              },
+              {
+                "name": "resumen",
+                "value": "={{ $json.resumen }}"
+              },
+              {
+                "name": "accion_requerida",
+                "value": "={{ $json.accion_requerida }}"
+              },
+              {
+                "name": "documentacion",
+                "value": "={{ JSON.stringify($json.documentacion ?? []) }}"
+              },
+              {
+                "name": "canales",
+                "value": "={{ JSON.stringify($json.canales ?? []) }}"
+              },
+              {
+                "name": "planes",
+                "value": "={{ JSON.stringify($json.planes ?? []) }}"
+              },
+              {
+                "name": "tema",
+                "value": "={{ $json.tema }}"
+              },
+              {
+                "name": "valor",
+                "value": "={{ $json.valor }}"
+              },
+              {
+                "name": "condiciones",
+                "value": "={{ $json.condiciones }}"
+              },
+              {
+                "name": "vigencia",
+                "value": "={{ $json.vigencia }}"
+              },
+              {
+                "name": "fuente",
+                "value": "={{ $json.fuente }}"
+              }
+            ]
+          }
+        }
+      },
+      "id": "ed73b1ef-6d55-476d-8173-dc0622cea917",
+      "name": "Default Data Loader",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "chunkSize": 10000
+      },
+      "id": "48be4941-6e83-44bc-a8fc-dcbc3c441056",
+      "name": "Character Text Splitter1",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "e8957bcb-bf41-4936-b3ff-e157e3d5349f",
+      "name": "Al recibir documento",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Al recibir documento": {
+      "main": [
+        [
+          {
+            "node": "Dividir FAQ por pregunta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dividir FAQ por pregunta": {
+      "main": [
+        [
+          {
+            "node": "Extraer metadatos FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer metadatos FAQ": {
+      "main": [
+        [
+          {
+            "node": "Preparar documento FAQ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar documento FAQ": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        []
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extraer metadatos FAQ",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Structured Output Parser2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extraer metadatos FAQ",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}
