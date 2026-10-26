@@ -27,4 +27,6 @@ Mantener los archivos JSON como exportaciones de n8n facilita su importación y 
 
 Configura las credenciales requeridas directamente en tu instancia n8n antes de activar o ejecutar los workflows. Los archivos conservan las referencias de credenciales del export original.
 
+Las tablas, operaciones y funciones de base de datos referenciadas por los exports están inventariadas en `../docs/supabase.md`. Verifica ese inventario contra el esquema desplegado antes de importar; no contiene credenciales ni reemplaza una migración SQL.
+
 Para experimentar con cambios sin tocar estos exports, importa los cuatro JSON de `../jerigo-test/workflows/rag-ingestion/` en un proyecto n8n separado y sigue las pautas de `../jerigo-test/README.md`.
