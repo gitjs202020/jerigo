@@ -19,6 +19,8 @@ Los workflows se guardan como exportaciones JSON de n8n, separados por responsab
 
 El inventario de tablas y funciones que los workflows esperan encontrar está en [`docs/supabase.md`](docs/supabase.md). Es una referencia derivada de los exports, no una inspección del esquema desplegado.
 
+La migración inicial está en `supabase/migrations/`. Revisa `docs/supabase.md` y aplícala primero en un proyecto de testing; no modifica tablas existentes.
+
 ## Estado de los archivos fuente
 
 - Chatbot: `workflows/chatbot/JeriGo - Chat WhatsApp.json`.
